@@ -1,0 +1,23 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: guess-playlist-backend
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+app:
+  cors:
+    allowed-origins: http://localhost:4200
+
+spotify:
+  client-id: ${SPOTIFY_CLIENT_ID:}
+  client-secret: ${SPOTIFY_CLIENT_SECRET:}
+  accounts-base-url: https://accounts.spotify.com
+  api-base-url: https://api.spotify.com/v1
+  redirect-uri: ${SPOTIFY_REDIRECT_URI:http://localhost:8080/api/spotify/callback}

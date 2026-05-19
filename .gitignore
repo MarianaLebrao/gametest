@@ -1,0 +1,33 @@
+﻿# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.jks
+
+# Logs
+*.log
+logs/
+
+# Java / Maven
+**/target/
+**/.mvn/wrapper/maven-wrapper.jar
+
+# Node / frontend
+**/node_modules/
+**/dist/
+
+# Coverage and reports
+**/coverage/
+**/.nyc_output/
+
+# Local tool caches
+**/.cache/
