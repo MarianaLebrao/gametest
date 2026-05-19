@@ -71,7 +71,7 @@ public class SpotifyApiClient {
 
   private List<SpotifyTrackOwnership> fetchAllPlaylistOwnerships(String playlistId, String token) {
     List<SpotifyTrackOwnership> ownerships = new ArrayList<>();
-    String nextUrl = properties.apiBaseUrl() + "/playlists/" + playlistId + "/tracks?limit=100";
+    String nextUrl = properties.apiBaseUrl() + "/playlists/" + playlistId + "/items?limit=100";
 
     while (nextUrl != null && !nextUrl.isBlank()) {
       SpotifyPlaylistItemsPageResponse page;
@@ -92,15 +92,16 @@ public class SpotifyApiClient {
       }
 
       for (SpotifyPlaylistItem item : page.items()) {
-        if (item == null || item.track() == null || item.addedBy() == null) {
+        if (item == null || item.addedBy() == null) {
           continue;
         }
-        if (item.track().id() == null || item.addedBy().id() == null) {
+        SpotifyTrack track = item.item() != null ? item.item() : item.track();
+        if (track == null || track.id() == null || item.addedBy().id() == null) {
           continue;
         }
 
         ownerships.add(new SpotifyTrackOwnership(
-            item.track().name(),
+            track.name(),
             item.addedBy().id(),
             item.addedBy().displayName() != null ? item.addedBy().displayName() : item.addedBy().id()));
       }

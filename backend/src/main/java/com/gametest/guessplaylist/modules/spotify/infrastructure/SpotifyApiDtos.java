@@ -14,7 +14,10 @@ record SpotifyTokenResponse(@JsonProperty("access_token") String accessToken) {}
 record SpotifyPlaylistItemsPageResponse(String next, List<SpotifyPlaylistItem> items) {}
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-record SpotifyPlaylistItem(SpotifyTrack track, @JsonProperty("added_by") SpotifyUser addedBy) {}
+record SpotifyPlaylistItem(
+    SpotifyTrack track,
+    SpotifyTrack item,
+    @JsonProperty("added_by") SpotifyUser addedBy) {}
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 record SpotifyTrack(String id, String name) {}
