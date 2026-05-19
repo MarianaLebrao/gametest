@@ -24,3 +24,6 @@ record SpotifyTrack(String id, String name) {}
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 record SpotifyUser(String id, @JsonProperty("display_name") String displayName) {}
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+record SpotifyUserProfileResponse(String id, @JsonProperty("display_name") String displayName) {}

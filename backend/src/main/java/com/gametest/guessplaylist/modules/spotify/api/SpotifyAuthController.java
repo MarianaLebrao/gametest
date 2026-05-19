@@ -2,8 +2,11 @@ package com.gametest.guessplaylist.modules.spotify.api;
 
 import com.gametest.guessplaylist.modules.spotify.infrastructure.SpotifyApiClient;
 import com.gametest.guessplaylist.modules.spotify.infrastructure.SpotifyProperties;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -40,6 +43,20 @@ public class SpotifyAuthController {
   @GetMapping("/callback")
   public ResponseEntity<SpotifyTokenExchangeResponse> callback(@RequestParam("code") String code) {
     var token = spotifyApiClient.exchangeAuthorizationCode(code);
+
+    SpotifyTokenExchangeResponse response = new SpotifyTokenExchangeResponse(
+        token.accessToken(),
+        token.refreshToken(),
+        token.expiresIn(),
+        token.scope(),
+        token.tokenType());
+
+    return ResponseEntity.ok(response);
+  }
+
+  @PostMapping("/refresh")
+  public ResponseEntity<SpotifyTokenExchangeResponse> refresh(@Valid @RequestBody SpotifyRefreshTokenInput input) {
+    var token = spotifyApiClient.refreshUserAccessToken(input.refreshToken());
 
     SpotifyTokenExchangeResponse response = new SpotifyTokenExchangeResponse(
         token.accessToken(),
