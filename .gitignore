@@ -31,3 +31,6 @@ logs/
 
 # Local tool caches
 **/.cache/
+
+# Local reference export (React/Figma)
+_figma_front/
