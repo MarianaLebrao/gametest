@@ -41,7 +41,9 @@ public class SpotifyAuthController {
   }
 
   @GetMapping("/callback")
-  public ResponseEntity<SpotifyTokenExchangeResponse> callback(@RequestParam("code") String code) {
+  public ResponseEntity<?> callback(
+      @RequestParam("code") String code,
+      @RequestParam(name = "format", required = false) String format) {
     var token = spotifyApiClient.exchangeAuthorizationCode(code);
 
     SpotifyTokenExchangeResponse response = new SpotifyTokenExchangeResponse(
@@ -51,7 +53,21 @@ public class SpotifyAuthController {
         token.scope(),
         token.tokenType());
 
-    return ResponseEntity.ok(response);
+    if ("json".equalsIgnoreCase(format)) {
+      return ResponseEntity.ok(response);
+    }
+
+    String redirectUrl = UriComponentsBuilder
+        .fromUriString(properties.frontendCallbackUri())
+        .queryParam("accessToken", response.accessToken())
+        .queryParam("refreshToken", response.refreshToken())
+        .queryParam("expiresIn", response.expiresIn())
+        .queryParam("scope", response.scope())
+        .queryParam("tokenType", response.tokenType())
+        .build()
+        .toUriString();
+
+    return ResponseEntity.status(302).header("Location", redirectUrl).build();
   }
 
   @PostMapping("/refresh")

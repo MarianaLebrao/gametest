@@ -8,4 +8,5 @@ public record SpotifyProperties(
     String clientSecret,
     String accountsBaseUrl,
     String apiBaseUrl,
-    String redirectUri) {}
+    String redirectUri,
+    String frontendCallbackUri) {}

@@ -21,3 +21,4 @@ spotify:
   accounts-base-url: https://accounts.spotify.com
   api-base-url: https://api.spotify.com/v1
   redirect-uri: ${SPOTIFY_REDIRECT_URI:http://localhost:8080/api/spotify/callback}
+  frontend-callback-uri: ${SPOTIFY_FRONTEND_CALLBACK_URI:http://localhost:4200}
