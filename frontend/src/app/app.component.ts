@@ -67,10 +67,6 @@ export class AppComponent {
     this.playlistLink.set(value);
   }
 
-  protected onSpotifyTokenInput(value: string): void {
-    this.spotifyAccessToken.set(value.trim());
-  }
-
   protected connectSpotify(): void {
     this.importError.set('');
     this.http
@@ -81,7 +77,7 @@ export class AppComponent {
             this.importError.set('Could not generate Spotify login URL.');
             return;
           }
-          window.open(res.url, '_blank', 'noopener,noreferrer');
+          window.location.href = res.url;
         },
         error: () => this.importError.set('Failed to contact backend for Spotify login.')
       });

@@ -86,14 +86,21 @@
   border-color: #8b5cf6;
 }
 
-.token {
-  resize: vertical;
-}
-
 .label {
   font-size: 13px;
   font-weight: 600;
   color: #374151;
+}
+
+.status {
+  margin: 0;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.status.ok {
+  color: #166534;
+  font-weight: 600;
 }
 
 .error {
