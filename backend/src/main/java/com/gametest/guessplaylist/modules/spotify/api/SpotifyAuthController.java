@@ -1,4 +1,4 @@
-﻿package com.gametest.guessplaylist.modules.spotify.api;
+package com.gametest.guessplaylist.modules.spotify.api;
 
 import com.gametest.guessplaylist.modules.spotify.infrastructure.SpotifyApiClient;
 import com.gametest.guessplaylist.modules.spotify.infrastructure.SpotifyProperties;

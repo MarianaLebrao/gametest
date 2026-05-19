@@ -1,4 +1,4 @@
-﻿package com.gametest.guessplaylist.shared.api;
+package com.gametest.guessplaylist.shared.api;
 
 import java.time.Instant;
 import org.springframework.http.HttpStatus;

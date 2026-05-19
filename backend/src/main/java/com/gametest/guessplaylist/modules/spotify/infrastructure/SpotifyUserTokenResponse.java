@@ -1,4 +1,4 @@
-﻿package com.gametest.guessplaylist.modules.spotify.infrastructure;
+package com.gametest.guessplaylist.modules.spotify.infrastructure;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
