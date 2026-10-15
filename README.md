@@ -1,28 +1,41 @@
-﻿# Guess The Playlist
+# WhoAddedThat?
 
-Monorepo inicial para o jogo de deducao social com playlist colaborativa.
+Jogo social para adivinhar quem escolheu cada musica. Cada participante entra
+com um apelido e envia links de videos do YouTube; nenhum login Google ou
+Spotify e necessario.
 
-## Stack inicial
-- Frontend: Angular + TypeScript
-- Backend: Java 21 + Spring Boot
-- Realtime/eventos: Kafka (pronto para evolucao), WebSocket (fase seguinte)
-- Banco: PostgreSQL
-- Infra local: Docker Compose
+## Stack
 
-## Estrutura
-- frontend/: app Angular (MVP UI)
-- backend/: API Spring Boot (MVP playlist -> tracks -> added_by)
-- infra/: docker-compose para Postgres e Kafka
-- docs/: arquitetura e roadmap
+- Frontend: Angular 17 + TypeScript, publicado no Firebase Hosting.
+- Backend: Java 21 + Spring Boot, publicado no Google Cloud Run.
+- Persistencia: Cloud Firestore.
+- Metadados de video: YouTube Data API v3.
+- Segredos: Google Secret Manager.
 
-## MVP tecnico (fase 1)
-1. Receber link de playlist publica
-2. Extrair playlist_id
-3. Buscar dados no Spotify (app token)
-4. Exibir tabela musica -> added_by
+## Fluxo do MVP
 
-## Proximos passos
-1. Subir infra com docker compose
-2. Configurar variaveis SPOTIFY_CLIENT_ID e SPOTIFY_CLIENT_SECRET
-3. Rodar backend
-4. Gerar frontend Angular e conectar no endpoint de importacao
+1. O host cria uma sala e recebe um codigo/link de convite.
+2. Os jogadores entram com um apelido.
+3. Cada jogador envia pelo menos um link publico do YouTube.
+4. O backend registra quem enviou cada musica.
+5. Na rodada, os participantes tentam adivinhar a autoria.
+
+## Desenvolvimento local
+
+Backend, usando armazenamento temporario em memoria:
+
+```powershell
+cd backend
+$env:YOUTUBE_API_KEY="sua-chave-local"
+mvn spring-boot:run
+```
+
+Frontend em outro terminal:
+
+```powershell
+cd frontend
+npm start
+```
+
+Em producao, o Hosting encaminha `/api/**` ao Cloud Run e o backend usa
+`ROOM_STORE=firestore`.

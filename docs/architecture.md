@@ -11,7 +11,8 @@ Este arquivo resume a arquitetura enviada no briefing.
 - Scoring
 
 ## Bounded contexts (futuro microservicos)
-- playlist-service (Spotify integration + ETL)
+- room-service (salas, jogadores e autoria das musicas)
+- youtube-client (metadados publicos de videos)
 - lobby-service (estado da sala)
 - game-service (rounds e votos)
 - scoring-service (pontuacao)

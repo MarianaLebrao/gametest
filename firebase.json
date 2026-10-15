@@ -1,0 +1,24 @@
+{
+  "hosting": {
+    "public": "frontend/dist/frontend/browser",
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "predeploy": ["npm --prefix frontend run build"],
+    "rewrites": [
+      {
+        "source": "/api/**",
+        "run": {
+          "serviceId": "spotguess-api",
+          "region": "southamerica-east1",
+          "pinTag": true
+        }
+      },
+      { "source": "**", "destination": "/index.html" }
+    ],
+    "headers": [
+      {
+        "source": "/index.html",
+        "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
+      }
+    ]
+  }
+}

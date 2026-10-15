@@ -13,12 +13,9 @@ management:
 
 app:
   cors:
-    allowed-origins: http://localhost:4200
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200,https://spotguess-20260312.web.app}
+  room-store: ${ROOM_STORE:memory}
+  google-cloud-project: ${GOOGLE_CLOUD_PROJECT:spotguess-20260312}
 
-spotify:
-  client-id: ${SPOTIFY_CLIENT_ID:}
-  client-secret: ${SPOTIFY_CLIENT_SECRET:}
-  accounts-base-url: https://accounts.spotify.com
-  api-base-url: https://api.spotify.com/v1
-  redirect-uri: ${SPOTIFY_REDIRECT_URI:http://localhost:8080/api/spotify/callback}
-  frontend-callback-uri: ${SPOTIFY_FRONTEND_CALLBACK_URI:http://localhost:4200}
+youtube:
+  api-key: ${YOUTUBE_API_KEY:}

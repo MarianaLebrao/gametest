@@ -1,210 +1,100 @@
-﻿<div class="app-bg">
-  <div class="container">
-        @switch (currentScreen()) {
-      @case ('home') {
-        <section class="card">
-          <header class="hero">
-            <div class="logo">♪</div>
-            <h1>WhoAddedThat?</h1>
-            <p>Guess who added each song</p>
-          </header>
-          <main class="body">
-            <button class="btn primary" (click)="setScreen('create')">Create Room</button>
-
-            <input
-              class="input"
-              placeholder="Enter room code"
-              [value]="roomCode()"
-              (input)="onRoomCodeInput($any($event.target).value)" />
-            <button class="btn dark" [disabled]="roomCode().length < 4" (click)="setScreen('lobby')">Join Room</button>
-          </main>
-        </section>
-      }
-
-      @case ('create') {
-        <section class="card">
-          <header class="hero small">
-            <button class="back" (click)="setScreen('home')">←</button>
-            <h1>Create Room</h1>
-          </header>
-          <main class="body">
-            <label class="label">Spotify Playlist Link</label>
-            <input
-              class="input"
-              placeholder="https://open.spotify.com/playlist/..."
-              [value]="playlistLink()"
-              (input)="onPlaylistInput($any($event.target).value)" />
-
-            <button class="btn ghost" (click)="connectSpotify()">
-              {{ spotifyAccessToken() ? 'Reconnect Spotify' : 'Connect Spotify' }}
-            </button>
-
-            <p class="status" [class.ok]="spotifyAccessToken()">
-              {{ spotifyAccessToken() ? 'Spotify connected' : 'Spotify not connected' }}
-            </p>
-
-            <div class="settings">
-              <h3>Game Settings</h3>
-
-              <p class="label">Number of Rounds</p>
-              <div class="inline-grid">
-                @for (n of [5, 8, 10, 15]; track n) {
-                  <button class="mini-btn" [class.active]="roundCount() === n" (click)="setRoundCount(n)">{{ n }}</button>
-                }
-              </div>
-
-              <p class="label">Round Timer</p>
-              <div class="inline-grid">
-                @for (sec of [15, 30, 45, 60]; track sec) {
-                  <button class="mini-btn" [class.active]="roundTimer() === sec" (click)="setRoundTimer(sec)">{{ sec }}s</button>
-                }
-              </div>
-
-              <p class="label">Game Mode</p>
-              <div class="inline-grid">
-                <button class="mini-btn wide" [class.active]="gameMode() === 'preview'" (click)="setGameMode('preview')">Preview</button>
-                <button class="mini-btn wide" [class.active]="gameMode() === 'blind'" (click)="setGameMode('blind')">Blind</button>
-              </div>
-            </div>
-
-            @if (importError()) {
-              <p class="error">{{ importError() }}</p>
-            }
-
-            <button class="btn primary" [disabled]="!playlistLink() || !spotifyAccessToken() || isImporting()" (click)="importPlaylist()">
-              {{ isImporting() ? 'Importing...' : 'Import Playlist' }}
-            </button>
-          </main>
-        </section>
-      }
-
-      @case ('import') {
-        <section class="card">
-          <header class="hero small"><h1>Importing Playlist</h1></header>
-          <main class="body center">
-            <div class="cover"></div>
-            <h2>{{ playlistName() }}</h2>
-            <p class="muted">{{ importedTracks().length }} songs • {{ importedMembers().length }} users</p>
-            <button class="btn primary" (click)="setScreen('lobby')">Continue to Lobby</button>
-          </main>
-        </section>
-      }
-
-      @case ('lobby') {
-        <section class="card">
-          <header class="hero small">
-            <h1>Game Lobby</h1>
-            <p class="mono">ABC123</p>
-          </header>
-          <main class="body">
-            <button class="btn ghost" (click)="copyCode()">{{ copied() ? 'Copied' : 'Copy code' }}</button>
-
-            <div class="list">
-              @for (member of importedMembers(); track member.spotifyUserId) {
-                <div class="row">
-                  <span>{{ member.displayName || member.spotifyUserId }}</span>
-                  <span>✓</span>
-                </div>
-              }
-            </div>
-
-            <button class="btn primary" (click)="setScreen('identity')">Choose Identity</button>
-          </main>
-        </section>
-      }
-
-      @case ('identity') {
-        <section class="card">
-          <header class="hero small">
-            <button class="back" (click)="setScreen('lobby')">←</button>
-            <h1>Choose Identity</h1>
-          </header>
-          <main class="body">
-            <div class="list">
-              @for (member of importedMembers(); track member.spotifyUserId) {
-                <button class="row pick" [class.selected]="selectedIdentity() === member.spotifyUserId" (click)="selectedIdentity.set(member.spotifyUserId)">
-                  <span>{{ member.displayName || member.spotifyUserId }}</span>
-                  <span>{{ selectedIdentity() === member.spotifyUserId ? '✓' : '' }}</span>
-                </button>
-              }
-            </div>
-            <button class="btn primary" [disabled]="!selectedIdentity()" (click)="setScreen('gameroom')">Confirm Identity</button>
-          </main>
-        </section>
-      }
-
-      @case ('gameroom') {
-        <section class="card">
-          <header class="hero small"><h1>Ready to Play</h1></header>
-          <main class="body center">
-            <p class="muted">{{ roundCount() }} rounds • {{ roundTimer() }}s • {{ gameMode() }} mode</p>
-            <p class="muted">{{ importedTracks().length }} tracks imported</p>
-            <button class="btn primary" (click)="setScreen('round')">Start Game</button>
-          </main>
-        </section>
-      }
-
-      @case ('round') {
-        <section class="card">
-          <header class="hero small"><h1>Round 1 of 8</h1></header>
-          <main class="body">
-            <h2>Who added this song?</h2>
-            <p class="muted">{{ importedTracks().length ? importedTracks()[0].trackName : 'No track loaded' }}</p>
-            <div class="grid">
-              @for (member of importedMembers(); track member.spotifyUserId) {
-                <button class="tile" [class.selected]="selectedVote() === member.spotifyUserId" (click)="selectedVote.set(member.spotifyUserId)">
-                  {{ member.displayName || member.spotifyUserId }}
-                </button>
-              }
-            </div>
-            <button class="btn primary" [disabled]="!selectedVote()" (click)="setScreen('voting')">Submit Vote</button>
-          </main>
-        </section>
-      }
-
-      @case ('voting') {
-        <section class="card">
-          <header class="hero small"><h1>Vote Submitted</h1></header>
-          <main class="body center">
-            <p class="muted">Waiting for other players...</p>
-            <button class="btn primary" (click)="setScreen('result')">View Results</button>
-          </main>
-        </section>
-      }
-
-      @case ('result') {
-        <section class="card">
-          <header class="hero small"><h1>Round Result</h1></header>
-          <main class="body">
-            <p class="muted">Added by: {{ importedTracks().length ? importedTracks()[0].ownerDisplayName : 'Unknown' }}</p>
-            <button class="btn primary" (click)="setScreen('scoreboard')">Next</button>
-          </main>
-        </section>
-      }
-
-      @case ('scoreboard') {
-        <section class="card">
-          <header class="hero small"><h1>Scoreboard</h1></header>
-          <main class="body">
-            <div class="row"><span>1. Jordan</span><strong>100</strong></div>
-            <div class="row"><span>2. Alex</span><strong>0</strong></div>
-            <div class="row"><span>3. Sam</span><strong>0</strong></div>
-            <button class="btn primary" (click)="setScreen('final')">Continue</button>
-          </main>
-        </section>
-      }
-
-      @case ('final') {
-        <section class="card">
-          <header class="hero small"><h1>Game Over</h1></header>
-          <main class="body center">
-            <h2>Winner: Jordan</h2>
-            <button class="btn primary" (click)="setScreen('create')">Play Again</button>
-            <button class="btn ghost" (click)="setScreen('home')">Back Home</button>
-          </main>
-        </section>
-      }
+<div class="app-bg"><div class="container">
+  @switch (currentScreen()) {
+    @case ('home') {
+      <section class="card">
+        <header class="hero"><div class="logo">♪</div><h1>WhoAddedThat?</h1><p>Guess who added each song</p></header>
+        <main class="body">
+          <label class="label">Your name</label>
+          <input class="input" placeholder="How should friends see you?" [value]="playerName()" (input)="onPlayerNameInput($any($event.target).value)" />
+          <button class="btn primary" [disabled]="!playerName().trim()" (click)="setScreen('create')">Create Room</button>
+          <div class="divider"><span>or join a room</span></div>
+          <input class="input code-input" placeholder="ROOM CODE" [value]="roomCode()" (input)="onRoomCodeInput($any($event.target).value)" />
+          <button class="btn dark" [disabled]="!playerName().trim() || roomCode().length !== 6 || isLoading()" (click)="joinRoom()">{{ isLoading() ? 'Joining...' : 'Join Room' }}</button>
+          @if (errorMessage()) { <p class="error">{{ errorMessage() }}</p> }
+        </main>
+      </section>
     }
-  </div>
-</div>
-
+    @case ('create') {
+      <section class="card">
+        <header class="hero small"><button class="back" (click)="setScreen('home')">←</button><h1>Create Room</h1></header>
+        <main class="body">
+          <div class="settings">
+            <h3>Game Settings</h3>
+            <p class="label">Number of Rounds</p>
+            <div class="inline-grid">@for (n of [5, 8, 10, 15]; track n) { <button class="mini-btn" [class.active]="roundCount() === n" (click)="setRoundCount(n)">{{ n }}</button> }</div>
+            <p class="label">Round Timer</p>
+            <div class="inline-grid">@for (sec of [15, 30, 45, 60]; track sec) { <button class="mini-btn" [class.active]="roundTimer() === sec" (click)="setRoundTimer(sec)">{{ sec }}s</button> }</div>
+            <p class="label">Game Mode</p>
+            <div class="inline-grid">
+              <button class="mini-btn wide" [class.active]="gameMode() === 'preview'" (click)="setGameMode('preview')">Preview</button>
+              <button class="mini-btn wide" [class.active]="gameMode() === 'blind'" (click)="setGameMode('blind')">Blind</button>
+            </div>
+          </div>
+          <p class="muted">No Spotify or Google login required. Everyone adds their own YouTube songs after joining.</p>
+          @if (errorMessage()) { <p class="error">{{ errorMessage() }}</p> }
+          <button class="btn primary" [disabled]="isLoading()" (click)="createRoom()">{{ isLoading() ? 'Creating...' : 'Create & Invite Friends' }}</button>
+        </main>
+      </section>
+    }
+    @case ('lobby') {
+      <section class="card">
+        <header class="hero small stacked"><span class="eyebrow">ROOM CODE</span><h1 class="room-code">{{ room()?.code }}</h1></header>
+        <main class="body">
+          <button class="btn ghost" (click)="copyInvite()">{{ copied() ? 'Invite copied!' : 'Copy invite link' }}</button>
+          <div class="submission-box">
+            <strong>Add your songs</strong><p class="muted">Paste at least one public YouTube video link.</p>
+            <input class="input" placeholder="https://youtube.com/watch?v=..." [value]="videoLink()" (input)="onVideoLinkInput($any($event.target).value)" />
+            <button class="btn dark" [disabled]="!videoLink() || isLoading()" (click)="addTrack()">{{ isLoading() ? 'Adding...' : 'Add song' }}</button>
+          </div>
+          @if (errorMessage()) { <p class="error">{{ errorMessage() }}</p> }
+          <div class="list">
+            @for (player of room()?.players ?? []; track player.id) {
+              <div class="row"><span>{{ player.name }} @if (player.id === playerId()) { <small>(you)</small> }</span>
+                <span class="song-count" [class.ready]="trackCountFor(player.id) > 0">{{ trackCountFor(player.id) }} song{{ trackCountFor(player.id) === 1 ? '' : 's' }}</span>
+              </div>
+            }
+          </div>
+          @if (isHost()) {
+            <button class="btn primary" [disabled]="!everyoneReady()" (click)="setScreen('gameroom')">Start Game</button>
+            @if (!everyoneReady()) { <p class="status">Waiting for every player to add a song.</p> }
+          } @else { <p class="status">The host will start when everyone is ready.</p> }
+        </main>
+      </section>
+    }
+    @case ('gameroom') {
+      <section class="card"><header class="hero small"><h1>Ready to Play</h1></header><main class="body center">
+        <p class="muted">{{ room()?.roundCount }} rounds • {{ room()?.roundTimer }}s • {{ room()?.gameMode }} mode</p>
+        <p class="muted">{{ room()?.tracks?.length }} songs from {{ room()?.players?.length }} players</p>
+        <button class="btn primary" (click)="setScreen('round')">Play first round</button>
+      </main></section>
+    }
+    @case ('round') {
+      <section class="card"><header class="hero small"><h1>Round 1</h1></header><main class="body">
+        <h2>Who added this song?</h2>
+        @if (currentTrack(); as track) {
+          @if (track.thumbnailUrl) { <img class="track-cover" [src]="track.thumbnailUrl" alt="Video thumbnail" /> }
+          <p><strong>{{ track.title }}</strong></p><p class="muted">{{ track.channelTitle }}</p>
+        }
+        <div class="grid">@for (player of room()?.players ?? []; track player.id) {
+          <button class="tile" [class.selected]="selectedVote() === player.id" (click)="selectedVote.set(player.id)">{{ player.name }}</button>
+        }</div>
+        <button class="btn primary" [disabled]="!selectedVote()" (click)="setScreen('voting')">Submit Vote</button>
+      </main></section>
+    }
+    @case ('voting') {
+      <section class="card"><header class="hero small"><h1>Vote Submitted</h1></header><main class="body center"><p class="muted">Waiting for other players...</p><button class="btn primary" (click)="setScreen('result')">View Result</button></main></section>
+    }
+    @case ('result') {
+      <section class="card"><header class="hero small"><h1>Round Result</h1></header><main class="body center"><p class="muted">Added by</p><h2>{{ currentTrack()?.ownerName }}</h2><button class="btn primary" (click)="setScreen('scoreboard')">Next</button></main></section>
+    }
+    @case ('scoreboard') {
+      <section class="card"><header class="hero small"><h1>Scoreboard</h1></header><main class="body">
+        @for (player of room()?.players ?? []; track player.id; let rank = $index) { <div class="row"><span>{{ rank + 1 }}. {{ player.name }}</span><strong>{{ rank === 0 ? 100 : 0 }}</strong></div> }
+        <button class="btn primary" (click)="setScreen('final')">Continue</button>
+      </main></section>
+    }
+    @case ('final') {
+      <section class="card"><header class="hero small"><h1>Game Over</h1></header><main class="body center"><h2>Thanks for playing!</h2><button class="btn ghost" (click)="setScreen('home')">Back Home</button></main></section>
+    }
+  }
+</div></div>
