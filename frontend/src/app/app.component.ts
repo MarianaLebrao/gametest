@@ -24,7 +24,7 @@ interface Room {
 })
 export class AppComponent implements OnInit, OnDestroy {
   private readonly http = inject(HttpClient);
-  private readonly apiBase = '/api';
+  private readonly apiBase = 'https://gametest-0trr.onrender.com/api';
   private roomPolling?: ReturnType<typeof setInterval>;
 
   protected readonly currentScreen = signal<Screen>('home');

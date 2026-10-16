@@ -1,33 +1,29 @@
-# Google Cloud deployment
+# Free deployment
 
-O SpotGuess usa um unico projeto Google Cloud/Firebase: `spotguess-20260312`.
+O SpotGuess usa servicos com faixas gratuitas e nao exige faturamento no Google Cloud:
 
 - Firebase Hosting publica o frontend Angular.
-- Cloud Run executa o backend Java/Spring Boot no servico `spotguess-api`.
-- Firestore persiste salas, jogadores e musicas.
-- Secret Manager entrega `YOUTUBE_API_KEY` ao Cloud Run.
-- Firebase Hosting encaminha `/api/**` para o Cloud Run.
+- Render executa o backend Java/Spring Boot.
+- MongoDB Atlas M0 persiste salas, jogadores e musicas.
+- YouTube Data API v3 fornece os metadados dos videos.
 
-## Recursos necessarios
+## Backend no Render
 
-```powershell
-gcloud config set project spotguess-20260312
-gcloud services enable run.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com firestore.googleapis.com secretmanager.googleapis.com
+O servico usa o diretorio `backend`, runtime Docker e o `backend/Dockerfile`.
+Configure estas variaveis sem coloca-las no Git:
+
+```text
+ROOM_STORE=mongodb
+MONGODB_URI=mongodb+srv://...
+MONGODB_REPOSITORIES_ENABLED=true
+YOUTUBE_API_KEY=...
+CORS_ALLOWED_ORIGINS=http://localhost:4200,https://spotguess-20260312.web.app
 ```
 
-Crie o banco Firestore em modo Native na regiao escolhida para o projeto. A
-identidade do servico Cloud Run precisa dos papeis de usuario do Firestore e
-acesso ao segredo da API do YouTube.
+O plano gratuito pode suspender o backend sem trafego. A primeira requisicao
+apos um periodo ocioso pode levar mais tempo.
 
-## Publicar o backend
-
-O `backend/Dockerfile` e usado automaticamente no deploy por codigo-fonte:
-
-```powershell
-gcloud run deploy spotguess-api --source backend --region southamerica-east1 --allow-unauthenticated --set-env-vars ROOM_STORE=firestore,GOOGLE_CLOUD_PROJECT=spotguess-20260312 --set-secrets YOUTUBE_API_KEY=spotguess-youtube-api-key:latest
-```
-
-## Publicar o frontend
+## Frontend no Firebase
 
 Na raiz do repositorio:
 
@@ -35,5 +31,5 @@ Na raiz do repositorio:
 firebase deploy --only hosting --project spotguess-20260312
 ```
 
-O predeploy compila o Angular e publica `frontend/dist/frontend/browser`. Nunca
-coloque a chave do YouTube no Angular ou em arquivos versionados.
+O predeploy compila o Angular e publica `frontend/dist/frontend/browser`.
+Nenhuma credencial deve ser colocada no frontend ou em arquivos versionados.

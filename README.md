@@ -7,8 +7,8 @@ Spotify e necessario.
 ## Stack
 
 - Frontend: Angular 17 + TypeScript, publicado no Firebase Hosting.
-- Backend: Java 21 + Spring Boot, publicado no Google Cloud Run.
-- Persistencia: Cloud Firestore.
+- Backend: Java 21 + Spring Boot, publicado no Render.
+- Persistencia: MongoDB Atlas.
 - Metadados de video: YouTube Data API v3.
 - Segredos: Google Secret Manager.
 
@@ -37,5 +37,5 @@ cd frontend
 npm start
 ```
 
-Em producao, o Hosting encaminha `/api/**` ao Cloud Run e o backend usa
-`ROOM_STORE=firestore`.
+Em producao, o Angular chama a API no Render e o backend usa
+`ROOM_STORE=mongodb`.

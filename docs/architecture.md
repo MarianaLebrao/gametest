@@ -11,7 +11,7 @@ Este arquivo resume a arquitetura enviada no briefing.
 - Scoring
 
 ## Bounded contexts (futuro microservicos)
-- room-service (salas, jogadores e autoria das musicas)
+- room-service (salas, jogadores e autoria persistidos no MongoDB)
 - youtube-client (metadados publicos de videos)
 - lobby-service (estado da sala)
 - game-service (rounds e votos)
