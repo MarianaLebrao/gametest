@@ -329,12 +329,19 @@ export class AppComponent implements OnInit, OnDestroy {
     this.errorMessage.set('');
     this.isLoading.set(true);
     try { await action(); }
-    catch (error: any) { this.errorMessage.set(error?.error?.message || fallbackMessage); }
+    catch (error: any) { this.errorMessage.set(this.friendlyError(error?.error?.message, fallbackMessage)); }
     finally { this.isLoading.set(false); }
   }
 
   private trackDraftSeconds(track: Track): number {
     return this.trackTimeDrafts()[track.id] ?? track.previewStartSeconds;
+  }
+
+  private friendlyError(message: string | undefined, fallback: string): string {
+    if (message === 'Room not found.') {
+      return 'Sala não encontrada. O convite pode ter expirado ou o anfitrião pode ter encerrado a sala.';
+    }
+    return message || fallback;
   }
 
   private setTrackDraft(trackId: string, seconds: number): void {
