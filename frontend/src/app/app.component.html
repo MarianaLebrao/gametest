@@ -47,7 +47,14 @@
             <strong>Adicione suas músicas ({{ trackCountFor(playerId()) }}/5)</strong>
             <p class="muted">Cole um vídeo público e marque quando começa o refrão ou melhor trecho. Cada pessoa pode adicionar até 5 músicas, e uma música só pode pertencer a uma pessoa na sala.</p>
             <input class="input" placeholder="https://youtube.com/watch?v=..." [value]="videoLink()" (input)="onVideoLinkInput($any($event.target).value)" />
-            <label class="timestamp-label"><span>Melhor trecho começa em</span><span class="timestamp-input"><input type="number" min="0" max="3600" [value]="previewStartSeconds()" (input)="onPreviewStartInput($any($event.target).value)" /> segundos</span></label>
+            <fieldset class="timestamp-field">
+              <legend>Melhor trecho começa em</legend>
+              <div class="timestamp-input">
+                <label><input type="number" inputmode="numeric" min="0" max="59" [value]="previewMinutes()" (input)="onPreviewMinutesInput($any($event.target).value)" /><span>min</span></label>
+                <span class="timestamp-separator">:</span>
+                <label><input type="number" inputmode="numeric" min="0" max="59" [value]="previewSecondsPart()" (input)="onPreviewSecondsInput($any($event.target).value)" /><span>seg</span></label>
+              </div>
+            </fieldset>
             <button class="btn dark" [disabled]="!videoLink() || !canAddTrack() || isLoading()" (click)="addTrack()">{{ isLoading() ? 'Adicionando...' : canAddTrack() ? 'Adicionar música' : 'Limite de 5 músicas atingido' }}</button>
           </div>
           @if (errorMessage()) { <p class="error">{{ errorMessage() }}</p> }

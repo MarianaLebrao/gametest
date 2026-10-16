@@ -105,8 +105,15 @@ export class AppComponent implements OnInit, OnDestroy {
     this.roomCode.set(value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6));
   }
   protected onVideoLinkInput(value: string): void { this.videoLink.set(value.trim()); }
-  protected onPreviewStartInput(value: string): void {
-    this.previewStartSeconds.set(Math.max(0, Math.min(3600, Number(value) || 0)));
+  protected previewMinutes(): number { return Math.floor(this.previewStartSeconds() / 60); }
+  protected previewSecondsPart(): number { return this.previewStartSeconds() % 60; }
+  protected onPreviewMinutesInput(value: string): void {
+    const minutes = Math.max(0, Math.min(59, Math.trunc(Number(value) || 0)));
+    this.previewStartSeconds.set(minutes * 60 + this.previewSecondsPart());
+  }
+  protected onPreviewSecondsInput(value: string): void {
+    const seconds = Math.max(0, Math.min(59, Math.trunc(Number(value) || 0)));
+    this.previewStartSeconds.set(this.previewMinutes() * 60 + seconds);
   }
 
   protected async createRoom(): Promise<void> {

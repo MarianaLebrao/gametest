@@ -269,9 +269,12 @@
 .row small { color: #7c3aed; }
 .track-cover { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 14px; }
 .capacity { font-size: 11px; opacity: 0.85; }
-.timestamp-label { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px; color: #4b5563; }
-.timestamp-input { display: flex; align-items: center; gap: 5px; white-space: nowrap; }
-.timestamp-input input { width: 64px; padding: 7px; border: 1px solid #d1d5db; border-radius: 8px; }
+.timestamp-field { margin: 0; padding: 10px 12px 12px; border: 1px solid #d1d5db; border-radius: 12px; color: #4b5563; }
+.timestamp-field legend { padding: 0 5px; font-size: 12px; font-weight: 700; }
+.timestamp-input { display: flex; align-items: center; justify-content: center; gap: 8px; }
+.timestamp-input label { display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 700; }
+.timestamp-input input { width: 68px; padding: 9px 7px; border: 1px solid #d1d5db; border-radius: 8px; text-align: center; font-size: 16px; font-weight: 800; }
+.timestamp-separator { color: #6b7280; font-size: 22px; font-weight: 800; }
 .round-head { justify-content: space-between !important; font-size: 14px; font-weight: 800; }
 .timer { display: grid; place-items: center; min-width: 48px; padding: 8px; border-radius: 999px; background: rgba(255,255,255,.2); }
 .mystery-disc { width: 132px; height: 132px; margin: 6px auto; border-radius: 50%; display: grid; place-items: center; color: white; font: 800 48px Georgia, serif; background: repeating-radial-gradient(circle, #171717 0 8px, #292524 9px 14px); box-shadow: 0 14px 30px rgba(17,24,39,.25); animation: spin 8s linear infinite; }
