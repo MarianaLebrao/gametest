@@ -47,7 +47,7 @@ export class AppComponent implements OnInit, OnDestroy {
   protected readonly isLoading = signal(false);
   protected readonly copied = signal(false);
   protected readonly selectedVote = signal<string | null>(null);
-  protected readonly previewVisible = signal(false);
+  protected readonly activePreviewUrl = signal<SafeResourceUrl | null>(null);
   protected readonly secondsLeft = signal(30);
   protected readonly roundCount = signal(8);
   protected readonly roundTimer = signal(30);
@@ -237,15 +237,14 @@ export class AppComponent implements OnInit, OnDestroy {
   protected setRoundCount(value: number): void { this.roundCount.set(value); }
   protected setRoundTimer(value: number): void { this.roundTimer.set(value); }
   protected setGameMode(value: GameMode): void { this.gameMode.set(value); }
-  protected playPreview(): void { this.previewVisible.set(true); }
-  protected previewUrl(): SafeResourceUrl | null {
+  protected playPreview(): void {
     const track = this.room()?.currentTrack;
-    if (!track) return null;
+    if (!track || this.activePreviewUrl()) return;
     const start = track.previewStartSeconds;
     const end = start + Math.min(this.room()?.roundTimer ?? 30, 60);
-    return this.sanitizer.bypassSecurityTrustResourceUrl(
-      `https://www.youtube-nocookie.com/embed/${track.videoId}?autoplay=1&start=${start}&end=${end}&controls=0&rel=0`
-    );
+    this.activePreviewUrl.set(this.sanitizer.bypassSecurityTrustResourceUrl(
+      `https://www.youtube-nocookie.com/embed/${track.videoId}?autoplay=1&start=${start}&end=${end}&controls=0&rel=0&playsinline=1`
+    ));
   }
 
   private async roomAction(path: string, body: object, fallback: string): Promise<void> {
@@ -285,7 +284,7 @@ export class AppComponent implements OnInit, OnDestroy {
     if (roundKey !== this.lastRoundKey) {
       this.lastRoundKey = roundKey;
       this.selectedVote.set(null);
-      this.previewVisible.set(false);
+      this.activePreviewUrl.set(null);
       if (room.status === 'PLAYING') this.startRoundClock(room.roundEndsAt);
       else this.stopRoundClock();
     }

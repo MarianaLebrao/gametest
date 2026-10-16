@@ -104,10 +104,10 @@
         <main class="body">
           <div class="mystery-disc"><span>?</span></div>
           <div class="center"><h2>Quem adicionou essa música?</h2><p class="muted">Ouça o trecho e escolha uma pessoa.</p></div>
-          @if (!previewVisible()) {
+          @if (!activePreviewUrl()) {
             <button class="btn listen" (click)="playPreview()">▶ Reproduzir melhor trecho</button>
           } @else {
-            @if (previewUrl(); as url) {
+            @if (activePreviewUrl(); as url) {
               <div class="player-shell"><iframe [src]="url" title="Trecho da música" allow="autoplay; encrypted-media" referrerpolicy="strict-origin-when-cross-origin"></iframe><span>Trecho tocando pelo YouTube</span></div>
             }
           }
