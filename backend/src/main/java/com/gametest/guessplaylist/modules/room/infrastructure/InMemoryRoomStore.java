@@ -17,4 +17,7 @@ public class InMemoryRoomStore implements RoomStore {
 
   @Override
   public Optional<GameRoom> findByCode(String code) { return Optional.ofNullable(rooms.get(code)); }
+
+  @Override
+  public void deleteByCode(String code) { rooms.remove(code); }
 }

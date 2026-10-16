@@ -71,4 +71,38 @@ class GameRoomTest {
     assertThat(room.scores()).containsEntry(room.hostPlayerId(), 100).containsEntry(friend.id(), 0);
     assertThat(room.roundEndsAt()).isNull();
   }
+
+  @Test
+  void transfersHostAndRemovesTheirTracksWhenHostLeavesLobby() {
+    GameRoom room = new GameRoom("ABC123", "Host", 8, 30, "preview");
+    GameRoom.Player friend = room.addPlayer("Friend");
+    room.addTrack(room.hostPlayerId(), "abcdefghijk", "A song", "A channel", "thumb", 20);
+
+    assertThat(room.removePlayer(room.hostPlayerId(), room.hostPlayerId())).isFalse();
+    assertThat(room.hostPlayerId()).isEqualTo(friend.id());
+    assertThat(room.tracks()).isEmpty();
+  }
+
+  @Test
+  void onlyHostCanRemoveAnotherPlayer() {
+    GameRoom room = new GameRoom("ABC123", "Host", 8, 30, "preview");
+    GameRoom.Player friend = room.addPlayer("Friend");
+    GameRoom.Player other = room.addPlayer("Other");
+
+    assertThatThrownBy(() -> room.removePlayer(friend.id(), other.id()))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("anfitrião");
+  }
+
+  @Test
+  void limitsEachPlayerToFiveTracks() {
+    GameRoom room = new GameRoom("ABC123", "Host", 8, 30, "preview");
+    for (int index = 0; index < 5; index++) {
+      room.addTrack(room.hostPlayerId(), "video-id-" + index, "Song", "Channel", "thumb", 20);
+    }
+
+    assertThatThrownBy(() -> room.addTrack(room.hostPlayerId(), "video-id-5", "Song", "Channel", "thumb", 20))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("máximo 5 músicas");
+  }
 }

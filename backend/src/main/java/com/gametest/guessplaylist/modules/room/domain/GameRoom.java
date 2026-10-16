@@ -9,9 +9,10 @@ import java.time.Instant;
 
 public class GameRoom {
   public static final int MAX_PLAYERS = 6;
+  public static final int MAX_TRACKS_PER_PLAYER = 5;
 
   private final String code;
-  private final String hostPlayerId;
+  private String hostPlayerId;
   private final int roundCount;
   private final int roundTimer;
   private final String gameMode;
@@ -77,6 +78,10 @@ public class GameRoom {
                                      String thumbnailUrl, int previewStartSeconds) {
     requireLobby();
     Player owner = player(playerId);
+    long playerTrackCount = tracks.stream().filter(track -> track.ownerPlayerId().equals(playerId)).count();
+    if (playerTrackCount >= MAX_TRACKS_PER_PLAYER) {
+      throw new IllegalArgumentException("Cada jogador pode adicionar no máximo 5 músicas.");
+    }
     if (tracks.stream().anyMatch(track -> track.videoId().equals(videoId))) {
       throw new IllegalArgumentException("Essa música já foi adicionada por outro jogador. Escolha outra música.");
     }
@@ -84,6 +89,22 @@ public class GameRoom {
         owner.id(), owner.name(), previewStartSeconds);
     tracks.add(track);
     return track;
+  }
+
+  public synchronized boolean removePlayer(String requesterPlayerId, String targetPlayerId) {
+    requireLobby();
+    player(requesterPlayerId);
+    player(targetPlayerId);
+    if (!requesterPlayerId.equals(targetPlayerId) && !hostPlayerId.equals(requesterPlayerId)) {
+      throw new IllegalArgumentException("Apenas o anfitrião pode remover outro jogador.");
+    }
+    players.removeIf(player -> player.id().equals(targetPlayerId));
+    tracks.removeIf(track -> track.ownerPlayerId().equals(targetPlayerId));
+    scores.remove(targetPlayerId);
+    votes.remove(targetPlayerId);
+    votes.entrySet().removeIf(entry -> entry.getValue().equals(targetPlayerId));
+    if (targetPlayerId.equals(hostPlayerId) && !players.isEmpty()) hostPlayerId = players.getFirst().id();
+    return players.isEmpty();
   }
 
   public synchronized void start(String playerId, List<String> shuffledTrackIds) {

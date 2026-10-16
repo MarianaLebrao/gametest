@@ -262,6 +262,10 @@
 .submission-box p { margin: 0; font-size: 12px; }
 .song-count { color: #9ca3af; font-size: 12px; font-weight: 700; }
 .song-count.ready { color: #15803d; }
+.player-actions { display: flex; align-items: center; gap: 8px; }
+.remove-player { border: 0; border-radius: 8px; padding: 6px 8px; color: #b91c1c; background: #fee2e2; font-size: 11px; font-weight: 700; cursor: pointer; }
+.remove-player:disabled { opacity: .5; }
+.btn.leave { margin-top: 4px; color: #b91c1c; background: #fef2f2; }
 .row small { color: #7c3aed; }
 .track-cover { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 14px; }
 .capacity { font-size: 11px; opacity: 0.85; }

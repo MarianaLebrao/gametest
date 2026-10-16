@@ -13,6 +13,8 @@ import java.time.Instant;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -43,6 +45,13 @@ public class RoomController {
   @PostMapping("/{code}/players")
   public PlayerView join(@PathVariable String code, @Valid @RequestBody JoinRoomInput input) {
     return PlayerView.from(roomService.join(code, input.playerName()));
+  }
+
+  @DeleteMapping("/{code}/players/{targetPlayerId}")
+  public ResponseEntity<Void> removePlayer(@PathVariable String code, @PathVariable String targetPlayerId,
+                                           @RequestParam String requesterPlayerId) {
+    roomService.removePlayer(code, requesterPlayerId, targetPlayerId);
+    return ResponseEntity.noContent().build();
   }
 
   @PostMapping("/{code}/tracks")

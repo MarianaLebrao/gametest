@@ -6,4 +6,5 @@ import java.util.Optional;
 public interface RoomStore {
   void save(GameRoom room);
   Optional<GameRoom> findByCode(String code);
+  void deleteByCode(String code);
 }

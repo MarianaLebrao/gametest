@@ -23,4 +23,9 @@ public class MongoRoomStore implements RoomStore {
   public Optional<GameRoom> findByCode(String code) {
     return repository.findById(code).map(MongoRoomDocument::toDomain);
   }
+
+  @Override
+  public void deleteByCode(String code) {
+    repository.deleteById(code);
+  }
 }

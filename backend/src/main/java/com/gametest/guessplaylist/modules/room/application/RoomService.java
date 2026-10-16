@@ -57,6 +57,12 @@ public class RoomService {
     return track;
   }
 
+  public synchronized void removePlayer(String code, String requesterPlayerId, String targetPlayerId) {
+    GameRoom room = find(code);
+    if (room.removePlayer(requesterPlayerId, targetPlayerId)) roomStore.deleteByCode(room.code());
+    else roomStore.save(room);
+  }
+
   public synchronized GameRoom start(String code, String playerId) {
     GameRoom room = find(code);
     List<String> trackIds = new ArrayList<>(room.tracks().stream().map(GameRoom.Track::id).toList());

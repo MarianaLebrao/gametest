@@ -63,7 +63,33 @@ export class AppComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void { this.stopPolling(); this.stopRoundClock(); }
   protected setScreen(screen: Screen): void { this.currentScreen.set(screen); }
-  protected leaveRoom(): void {
+  protected async leaveRoom(): Promise<void> {
+    const room = this.room();
+    const playerId = this.playerId();
+    if (room && playerId) {
+      try {
+        await firstValueFrom(this.http.delete(
+          `${this.apiBase}/rooms/${room.code}/players/${playerId}?requesterPlayerId=${encodeURIComponent(playerId)}`));
+      } catch {
+        // Leaving locally must remain possible during a connection failure.
+      }
+    }
+    this.clearSession();
+  }
+
+  protected async removePlayer(targetPlayerId: string): Promise<void> {
+    const room = this.room();
+    if (!room || !this.isHost() || targetPlayerId === this.playerId()) return;
+    const player = room.players.find(candidate => candidate.id === targetPlayerId);
+    if (!window.confirm(`Remover ${player?.name ?? 'este jogador'} da sala?`)) return;
+    await this.runRequest(async () => {
+      await firstValueFrom(this.http.delete(
+        `${this.apiBase}/rooms/${room.code}/players/${targetPlayerId}?requesterPlayerId=${encodeURIComponent(this.playerId())}`));
+      await this.refreshRoom();
+    }, 'Não foi possível remover esse jogador.');
+  }
+
+  private clearSession(): void {
     this.stopPolling();
     this.stopRoundClock();
     localStorage.removeItem(this.sessionKey);
@@ -145,6 +171,7 @@ export class AppComponent implements OnInit, OnDestroy {
   protected trackCountFor(playerId: string): number {
     return this.room()?.tracks.filter(track => track.ownerPlayerId === playerId).length ?? 0;
   }
+  protected canAddTrack(): boolean { return this.trackCountFor(this.playerId()) < 5; }
   protected everyoneReady(): boolean {
     const room = this.room();
     return !!room && room.players.length >= 2 && room.players.every(player => this.trackCountFor(player.id) > 0);
@@ -227,7 +254,13 @@ export class AppComponent implements OnInit, OnDestroy {
   private async refreshRoom(): Promise<void> {
     if (!this.roomCode()) return;
     try {
-      this.applyRoom(await firstValueFrom(this.http.get<Room>(`${this.apiBase}/rooms/${this.roomCode()}`)));
+      const room = await firstValueFrom(this.http.get<Room>(`${this.apiBase}/rooms/${this.roomCode()}`));
+      if (this.playerId() && !room.players.some(player => player.id === this.playerId())) {
+        this.clearSession();
+        this.errorMessage.set('Você foi removido da sala pelo anfitrião.');
+        return;
+      }
+      this.applyRoom(room);
     } catch {
       // Keep current state during brief network or cold-start failures.
     }
