@@ -1,6 +1,5 @@
 package com.gametest.guessplaylist.modules.youtube;
 
-import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -8,7 +7,6 @@ import java.util.regex.Pattern;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
-import org.springframework.web.util.UriComponentsBuilder;
 
 @Component
 public class YouTubeClient {
@@ -33,14 +31,14 @@ public class YouTubeClient {
       throw new IllegalStateException("YouTube API key is not configured on the backend.");
     }
 
-    URI uri = UriComponentsBuilder.fromPath("/videos")
-        .queryParam("part", "snippet")
-        .queryParam("id", videoId)
-        .queryParam("key", apiKey)
-        .build()
-        .toUri();
-
-    VideoListResponse response = restClient.get().uri(uri).retrieve().body(VideoListResponse.class);
+    VideoListResponse response = restClient.get()
+        .uri(uriBuilder -> uriBuilder.path("/videos")
+            .queryParam("part", "snippet")
+            .queryParam("id", videoId)
+            .queryParam("key", apiKey)
+            .build())
+        .retrieve()
+        .body(VideoListResponse.class);
     if (response == null || response.items() == null || response.items().isEmpty()) {
       throw new IllegalArgumentException("YouTube video was not found or is not public.");
     }
