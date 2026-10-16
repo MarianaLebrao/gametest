@@ -15,8 +15,10 @@ interface Track {
 interface Room {
   code: string; hostPlayerId: string; roundCount: number; roundTimer: number; gameMode: GameMode;
   status: RoomStatus; currentRound: number; totalRounds: number; players: Player[]; tracks: Track[];
-  currentTrack: Track | null; votedPlayerIds: string[]; scores: Record<string, number>;
+  currentTrack: Track | null; votedPlayerIds: string[]; scores: Record<string, number>; roundEndsAt: string | null;
 }
+
+interface SavedSession { roomCode: string; playerId: string; playerName: string; }
 
 @Component({
   selector: 'app-root',
@@ -32,6 +34,7 @@ export class AppComponent implements OnInit, OnDestroy {
   private roomPolling?: ReturnType<typeof setInterval>;
   private roundClock?: ReturnType<typeof setInterval>;
   private lastRoundKey = '';
+  private readonly sessionKey = 'who-added-that-session';
 
   protected readonly currentScreen = signal<Screen>('home');
   protected readonly playerName = signal('');
@@ -52,11 +55,25 @@ export class AppComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     const invitedCode = new URLSearchParams(window.location.search).get('room');
-    if (invitedCode) this.roomCode.set(invitedCode.toUpperCase().slice(0, 6));
+    const code = invitedCode?.toUpperCase().slice(0, 6);
+    if (code) this.roomCode.set(code);
+    const session = this.readSession();
+    if (session && (!code || session.roomCode === code)) void this.restoreSession(session);
   }
 
   ngOnDestroy(): void { this.stopPolling(); this.stopRoundClock(); }
   protected setScreen(screen: Screen): void { this.currentScreen.set(screen); }
+  protected leaveRoom(): void {
+    this.stopPolling();
+    this.stopRoundClock();
+    localStorage.removeItem(this.sessionKey);
+    this.room.set(null);
+    this.playerId.set('');
+    this.roomCode.set('');
+    this.lastRoundKey = '';
+    this.currentScreen.set('home');
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
   protected onPlayerNameInput(value: string): void { this.playerName.set(value.slice(0, 30)); }
   protected onRoomCodeInput(value: string): void {
     this.roomCode.set(value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6));
@@ -163,6 +180,13 @@ export class AppComponent implements OnInit, OnDestroy {
   private enterRoom(room: Room, playerId: string): void {
     this.roomCode.set(room.code);
     this.playerId.set(playerId);
+    const player = room.players.find(candidate => candidate.id === playerId);
+    if (player) {
+      this.playerName.set(player.name);
+      localStorage.setItem(this.sessionKey, JSON.stringify({
+        roomCode: room.code, playerId, playerName: player.name
+      } satisfies SavedSession));
+    }
     this.applyRoom(room);
     window.history.replaceState({}, document.title, `${window.location.pathname}?room=${room.code}`);
     this.startPolling();
@@ -175,7 +199,7 @@ export class AppComponent implements OnInit, OnDestroy {
       this.lastRoundKey = roundKey;
       this.selectedVote.set(null);
       this.previewVisible.set(false);
-      if (room.status === 'PLAYING') this.startRoundClock(room.roundTimer);
+      if (room.status === 'PLAYING') this.startRoundClock(room.roundEndsAt);
       else this.stopRoundClock();
     }
     const screens: Record<RoomStatus, Screen> = {
@@ -184,10 +208,15 @@ export class AppComponent implements OnInit, OnDestroy {
     this.currentScreen.set(screens[room.status]);
   }
 
-  private startRoundClock(seconds: number): void {
+  private startRoundClock(roundEndsAt: string | null): void {
     this.stopRoundClock();
-    this.secondsLeft.set(seconds);
-    this.roundClock = setInterval(() => this.secondsLeft.update(value => Math.max(0, value - 1)), 1000);
+    const update = () => {
+      const milliseconds = roundEndsAt ? new Date(roundEndsAt).getTime() - Date.now() : 0;
+      this.secondsLeft.set(Math.max(0, Math.ceil(milliseconds / 1000)));
+      if (milliseconds <= 0) void this.refreshRoom();
+    };
+    update();
+    this.roundClock = setInterval(update, 500);
   }
   private stopRoundClock(): void { if (this.roundClock) clearInterval(this.roundClock); }
   private startPolling(): void {
@@ -209,5 +238,29 @@ export class AppComponent implements OnInit, OnDestroy {
     try { await action(); }
     catch (error: any) { this.errorMessage.set(error?.error?.message || fallbackMessage); }
     finally { this.isLoading.set(false); }
+  }
+
+  private readSession(): SavedSession | null {
+    try {
+      const value = localStorage.getItem(this.sessionKey);
+      return value ? JSON.parse(value) as SavedSession : null;
+    } catch {
+      localStorage.removeItem(this.sessionKey);
+      return null;
+    }
+  }
+
+  private async restoreSession(session: SavedSession): Promise<void> {
+    this.isLoading.set(true);
+    try {
+      const room = await firstValueFrom(this.http.get<Room>(`${this.apiBase}/rooms/${session.roomCode}`));
+      if (!room.players.some(player => player.id === session.playerId)) throw new Error('Jogador não encontrado');
+      this.enterRoom(room, session.playerId);
+    } catch {
+      localStorage.removeItem(this.sessionKey);
+      this.playerId.set('');
+    } finally {
+      this.isLoading.set(false);
+    }
   }
 }

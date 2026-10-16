@@ -5,6 +5,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.time.Instant;
 
 public class GameRoom {
   public static final int MAX_PLAYERS = 6;
@@ -21,6 +22,7 @@ public class GameRoom {
   private final Map<String, Integer> scores = new LinkedHashMap<>();
   private String status = "LOBBY";
   private int currentRound;
+  private Instant roundEndsAt;
 
   public GameRoom(String code, String hostName, int roundCount, int roundTimer, String gameMode) {
     this.code = code;
@@ -34,7 +36,8 @@ public class GameRoom {
 
   public GameRoom(String code, String hostPlayerId, int roundCount, int roundTimer, String gameMode,
                   List<Player> players, List<Track> tracks, String status, int currentRound,
-                  List<String> roundTrackIds, Map<String, String> votes, Map<String, Integer> scores) {
+                  List<String> roundTrackIds, Map<String, String> votes, Map<String, Integer> scores,
+                  Instant roundEndsAt) {
     this.code = code;
     this.hostPlayerId = hostPlayerId;
     this.roundCount = roundCount;
@@ -44,6 +47,9 @@ public class GameRoom {
     this.tracks.addAll(tracks == null ? List.of() : tracks);
     this.status = status == null ? "LOBBY" : status;
     this.currentRound = currentRound;
+    this.roundEndsAt = "PLAYING".equals(this.status) && roundEndsAt == null
+        ? Instant.now().plusSeconds(roundTimer)
+        : roundEndsAt;
     this.roundTrackIds.addAll(roundTrackIds == null ? List.of() : roundTrackIds);
     this.votes.putAll(votes == null ? Map.of() : votes);
     if (scores == null || scores.isEmpty()) {
@@ -72,7 +78,7 @@ public class GameRoom {
     requireLobby();
     Player owner = player(playerId);
     if (tracks.stream().anyMatch(track -> track.videoId().equals(videoId))) {
-      throw new IllegalArgumentException("This video is already in the room.");
+      throw new IllegalArgumentException("Essa música já foi adicionada por outro jogador. Escolha outra música.");
     }
     Track track = new Track(UUID.randomUUID().toString(), videoId, title, channelTitle, thumbnailUrl,
         owner.id(), owner.name(), previewStartSeconds);
@@ -96,9 +102,11 @@ public class GameRoom {
     currentRound = 0;
     votes.clear();
     status = "PLAYING";
+    roundEndsAt = Instant.now().plusSeconds(roundTimer);
   }
 
   public synchronized void submitVote(String voterPlayerId, String targetPlayerId) {
+    finishRoundIfExpired(Instant.now());
     if (!"PLAYING".equals(status)) {
       throw new IllegalArgumentException("This round is not accepting votes.");
     }
@@ -110,6 +118,7 @@ public class GameRoom {
     if (votes.size() == players.size()) {
       scoreRound();
       status = "RESULTS";
+      roundEndsAt = null;
     }
   }
 
@@ -121,6 +130,15 @@ public class GameRoom {
     votes.clear();
     currentRound++;
     status = currentRound >= roundTrackIds.size() ? "FINISHED" : "PLAYING";
+    roundEndsAt = "PLAYING".equals(status) ? Instant.now().plusSeconds(roundTimer) : null;
+  }
+
+  public synchronized boolean finishRoundIfExpired(Instant now) {
+    if (!"PLAYING".equals(status) || roundEndsAt == null || now.isBefore(roundEndsAt)) return false;
+    scoreRound();
+    status = "RESULTS";
+    roundEndsAt = null;
+    return true;
   }
 
   public synchronized Track currentTrack() {
@@ -168,6 +186,7 @@ public class GameRoom {
   public synchronized List<String> roundTrackIds() { return List.copyOf(roundTrackIds); }
   public synchronized Map<String, String> votes() { return Map.copyOf(votes); }
   public synchronized Map<String, Integer> scores() { return Map.copyOf(scores); }
+  public synchronized Instant roundEndsAt() { return roundEndsAt; }
 
   public record Player(String id, String name) {}
   public record Track(String id, String videoId, String title, String channelTitle, String thumbnailUrl,

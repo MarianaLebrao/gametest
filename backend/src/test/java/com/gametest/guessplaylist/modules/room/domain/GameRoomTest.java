@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.junit.jupiter.api.Test;
+import java.time.Instant;
 
 class GameRoomTest {
 
@@ -26,7 +27,7 @@ class GameRoomTest {
 
     assertThatThrownBy(() -> room.addTrack(room.hostPlayerId(), "abcdefghijk", "A song", "A channel", "thumb", 30))
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("This video is already in the room.");
+        .hasMessageContaining("já foi adicionada");
   }
 
   @Test
@@ -54,5 +55,20 @@ class GameRoomTest {
     assertThat(room.scores()).containsEntry(room.hostPlayerId(), 100).containsEntry(friend.id(), 100);
     room.advance(room.hostPlayerId());
     assertThat(room.status()).isEqualTo("FINISHED");
+  }
+
+  @Test
+  void finishesVotingWhenServerDeadlineExpires() {
+    GameRoom room = new GameRoom("ABC123", "Host", 1, 30, "preview");
+    GameRoom.Player friend = room.addPlayer("Friend");
+    GameRoom.Track track = room.addTrack(friend.id(), "abcdefghijk", "A song", "A channel", "thumb", 20);
+    room.addTrack(room.hostPlayerId(), "12345678901", "Other song", "Other channel", "thumb", 30);
+    room.start(room.hostPlayerId(), java.util.List.of(track.id()));
+    room.submitVote(room.hostPlayerId(), friend.id());
+
+    assertThat(room.finishRoundIfExpired(Instant.now().plusSeconds(31))).isTrue();
+    assertThat(room.status()).isEqualTo("RESULTS");
+    assertThat(room.scores()).containsEntry(room.hostPlayerId(), 100).containsEntry(friend.id(), 0);
+    assertThat(room.roundEndsAt()).isNull();
   }
 }

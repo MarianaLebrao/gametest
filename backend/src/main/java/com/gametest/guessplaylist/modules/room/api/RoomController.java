@@ -9,6 +9,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import java.util.List;
+import java.time.Instant;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -79,7 +80,7 @@ public class RoomController {
   public record RoomView(String code, String hostPlayerId, int roundCount, int roundTimer, String gameMode,
                          String status, int currentRound, int totalRounds, List<PlayerView> players,
                          List<TrackView> tracks, TrackView currentTrack, List<String> votedPlayerIds,
-                         java.util.Map<String, Integer> scores) {
+                         java.util.Map<String, Integer> scores, Instant roundEndsAt) {
     static RoomView from(GameRoom room) {
       boolean revealCurrentTrack = !"PLAYING".equals(room.status());
       List<TrackView> visibleTracks = "LOBBY".equals(room.status())
@@ -89,7 +90,7 @@ public class RoomController {
           room.status(), room.currentRound(), room.roundTrackIds().size(),
           room.players().stream().map(PlayerView::from).toList(), visibleTracks,
           TrackView.from(room.currentTrack(), revealCurrentTrack),
-          room.votes().keySet().stream().toList(), room.scores());
+          room.votes().keySet().stream().toList(), room.scores(), room.roundEndsAt());
     }
   }
 

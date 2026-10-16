@@ -8,6 +8,7 @@ import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.time.Instant;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -34,8 +35,10 @@ public class RoomService {
   }
 
   public GameRoom find(String code) {
-    return roomStore.findByCode(normalize(code))
+    GameRoom room = roomStore.findByCode(normalize(code))
         .orElseThrow(() -> new IllegalArgumentException("Room not found."));
+    if (room.finishRoundIfExpired(Instant.now())) roomStore.save(room);
+    return room;
   }
 
   public synchronized GameRoom.Player join(String code, String playerName) {

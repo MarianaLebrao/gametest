@@ -43,7 +43,7 @@
           <button class="btn ghost" (click)="copyInvite()">{{ copied() ? 'Convite copiado!' : 'Copiar link de convite' }}</button>
           <div class="submission-box">
             <strong>Adicione suas músicas</strong>
-            <p class="muted">Cole um vídeo público e marque quando começa o refrão ou melhor trecho.</p>
+            <p class="muted">Cole um vídeo público e marque quando começa o refrão ou melhor trecho. Cada música só pode pertencer a uma pessoa na sala.</p>
             <input class="input" placeholder="https://youtube.com/watch?v=..." [value]="videoLink()" (input)="onVideoLinkInput($any($event.target).value)" />
             <label class="timestamp-label"><span>Melhor trecho começa em</span><span class="timestamp-input"><input type="number" min="0" max="3600" [value]="previewStartSeconds()" (input)="onPreviewStartInput($any($event.target).value)" /> segundos</span></label>
             <button class="btn dark" [disabled]="!videoLink() || isLoading()" (click)="addTrack()">{{ isLoading() ? 'Adicionando...' : 'Adicionar música' }}</button>
@@ -114,7 +114,7 @@
           <div class="score-list final-score">@for (player of sortedPlayers(); track player.id; let rank = $index) {
             <div class="row" [class.winner]="rank === 0"><span><b>{{ rank + 1 }}º</b> {{ player.name }}</span><strong>{{ scoreFor(player.id) }} pts</strong></div>
           }</div>
-          <button class="btn ghost" (click)="setScreen('home')">Voltar ao início</button>
+          <button class="btn ghost" (click)="leaveRoom()">Sair da sala</button>
         </main>
       </section>
     }
