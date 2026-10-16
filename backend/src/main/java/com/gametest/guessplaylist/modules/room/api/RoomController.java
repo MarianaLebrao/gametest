@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -59,6 +60,20 @@ public class RoomController {
     return TrackView.from(roomService.addTrack(code, input.playerId(), input.videoUrl(), input.previewStartSeconds()), true);
   }
 
+  @PutMapping("/{code}/tracks/{trackId}")
+  public TrackView updateTrackTime(@PathVariable String code, @PathVariable String trackId,
+                                   @Valid @RequestBody UpdateTrackInput input) {
+    return TrackView.from(roomService.updateTrackTime(code, input.playerId(), trackId,
+        input.previewStartSeconds()), true);
+  }
+
+  @DeleteMapping("/{code}/tracks/{trackId}")
+  public ResponseEntity<Void> removeTrack(@PathVariable String code, @PathVariable String trackId,
+                                          @RequestParam String playerId) {
+    roomService.removeTrack(code, playerId, trackId);
+    return ResponseEntity.noContent().build();
+  }
+
   @PostMapping("/{code}/start")
   public RoomView start(@PathVariable String code, @Valid @RequestBody PlayerActionInput input) {
     return RoomView.from(roomService.start(code, input.playerId()));
@@ -83,6 +98,8 @@ public class RoomController {
   public record JoinRoomInput(@NotBlank @Size(max = 30) String playerName) {}
   public record AddTrackInput(@NotBlank String playerId, @NotBlank String videoUrl,
                               @Min(0) @Max(3600) int previewStartSeconds) {}
+  public record UpdateTrackInput(@NotBlank String playerId,
+                                 @Min(0) @Max(3600) int previewStartSeconds) {}
   public record PlayerActionInput(@NotBlank String playerId) {}
   public record VoteInput(@NotBlank String playerId, @NotBlank String targetPlayerId) {}
 

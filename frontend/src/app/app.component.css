@@ -266,6 +266,19 @@
 .remove-player { border: 0; border-radius: 8px; padding: 6px 8px; color: #b91c1c; background: #fee2e2; font-size: 11px; font-weight: 700; cursor: pointer; }
 .remove-player:disabled { opacity: .5; }
 .btn.leave { margin-top: 4px; color: #b91c1c; background: #fef2f2; }
+.my-tracks { display: grid; gap: 8px; }
+.my-tracks h3 { margin: 4px 0 0; font-size: 15px; }
+.track-editor { display: grid; grid-template-columns: 84px minmax(0,1fr); gap: 10px; padding: 10px; border: 1px solid #e5e7eb; border-radius: 14px; background: #fafafa; }
+.track-editor > img { width: 84px; height: 84px; border-radius: 10px; object-fit: cover; }
+.track-editor-content { min-width: 0; display: grid; gap: 5px; }
+.track-editor-content > strong, .track-editor-content > small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.track-editor-content > small { color: #6b7280; }
+.track-time-edit, .track-actions { display: flex; align-items: center; gap: 5px; font-size: 11px; }
+.track-time-edit input { width: 42px; padding: 5px; border: 1px solid #d1d5db; border-radius: 7px; text-align: center; }
+.track-actions button { border: 0; border-radius: 8px; padding: 6px 8px; font-size: 10px; font-weight: 800; cursor: pointer; }
+.track-actions button:disabled { opacity: .45; cursor: not-allowed; }
+.save-track { color: #fff; background: #7c3aed; }
+.delete-track { color: #b91c1c; background: #fee2e2; }
 .row small { color: #7c3aed; }
 .track-cover { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 14px; }
 .capacity { font-size: 11px; opacity: 0.85; }

@@ -52,6 +52,7 @@ export class AppComponent implements OnInit, OnDestroy {
   protected readonly roundCount = signal(8);
   protected readonly roundTimer = signal(30);
   protected readonly gameMode = signal<GameMode>('preview');
+  protected readonly trackTimeDrafts = signal<Record<string, number>>({});
 
   ngOnInit(): void {
     const invitedCode = new URLSearchParams(window.location.search).get('room');
@@ -149,6 +150,51 @@ export class AppComponent implements OnInit, OnDestroy {
     }, 'Could not add this video. Check that the YouTube link is public.');
   }
 
+  protected ownTracks(): Track[] {
+    return this.room()?.tracks.filter(track => track.ownerPlayerId === this.playerId()) ?? [];
+  }
+  protected trackDraftMinutes(track: Track): number {
+    return Math.floor(this.trackDraftSeconds(track) / 60);
+  }
+  protected trackDraftSecondsPart(track: Track): number {
+    return this.trackDraftSeconds(track) % 60;
+  }
+  protected onTrackMinutesInput(track: Track, value: string): void {
+    const minutes = Math.max(0, Math.min(59, Math.trunc(Number(value) || 0)));
+    this.setTrackDraft(track.id, minutes * 60 + this.trackDraftSecondsPart(track));
+  }
+  protected onTrackSecondsInput(track: Track, value: string): void {
+    const seconds = Math.max(0, Math.min(59, Math.trunc(Number(value) || 0)));
+    this.setTrackDraft(track.id, this.trackDraftMinutes(track) * 60 + seconds);
+  }
+  protected trackTimeChanged(track: Track): boolean {
+    return this.trackDraftSeconds(track) !== track.previewStartSeconds;
+  }
+  protected async saveTrackTime(track: Track): Promise<void> {
+    const room = this.room();
+    if (!room || !this.trackTimeChanged(track)) return;
+    await this.runRequest(async () => {
+      await firstValueFrom(this.http.put<Track>(`${this.apiBase}/rooms/${room.code}/tracks/${track.id}`, {
+        playerId: this.playerId(), previewStartSeconds: this.trackDraftSeconds(track)
+      }));
+      await this.refreshRoom();
+    }, 'Não foi possível atualizar o tempo da música.');
+  }
+  protected async deleteTrack(track: Track): Promise<void> {
+    const room = this.room();
+    if (!room || !window.confirm(`Excluir “${track.title ?? 'esta música'}”?`)) return;
+    await this.runRequest(async () => {
+      await firstValueFrom(this.http.delete(
+        `${this.apiBase}/rooms/${room.code}/tracks/${track.id}?playerId=${encodeURIComponent(this.playerId())}`));
+      this.trackTimeDrafts.update(drafts => {
+        const updated = { ...drafts };
+        delete updated[track.id];
+        return updated;
+      });
+      await this.refreshRoom();
+    }, 'Não foi possível excluir essa música.');
+  }
+
   protected async startGame(): Promise<void> {
     await this.roomAction('start', { playerId: this.playerId() }, 'Could not start the game.');
   }
@@ -228,6 +274,13 @@ export class AppComponent implements OnInit, OnDestroy {
 
   private applyRoom(room: Room): void {
     this.room.set(room);
+    this.trackTimeDrafts.update(drafts => {
+      const updated = { ...drafts };
+      room.tracks.filter(track => track.ownerPlayerId === this.playerId()).forEach(track => {
+        if (updated[track.id] === undefined) updated[track.id] = track.previewStartSeconds;
+      });
+      return updated;
+    });
     const roundKey = `${room.status}-${room.currentRound}`;
     if (roundKey !== this.lastRoundKey) {
       this.lastRoundKey = roundKey;
@@ -278,6 +331,14 @@ export class AppComponent implements OnInit, OnDestroy {
     try { await action(); }
     catch (error: any) { this.errorMessage.set(error?.error?.message || fallbackMessage); }
     finally { this.isLoading.set(false); }
+  }
+
+  private trackDraftSeconds(track: Track): number {
+    return this.trackTimeDrafts()[track.id] ?? track.previewStartSeconds;
+  }
+
+  private setTrackDraft(trackId: string, seconds: number): void {
+    this.trackTimeDrafts.update(drafts => ({ ...drafts, [trackId]: seconds }));
   }
 
   private readSession(): SavedSession | null {

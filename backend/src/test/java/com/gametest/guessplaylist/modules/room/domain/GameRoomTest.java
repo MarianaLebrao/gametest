@@ -105,4 +105,29 @@ class GameRoomTest {
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("máximo 5 músicas");
   }
+
+  @Test
+  void ownerCanEditAndRemoveOwnTrackInLobby() {
+    GameRoom room = new GameRoom("ABC123", "Host", 8, 30, "preview");
+    GameRoom.Track track = room.addTrack(room.hostPlayerId(), "abcdefghijk", "Song", "Channel", "thumb", 20);
+
+    GameRoom.Track updated = room.updateTrackTime(room.hostPlayerId(), track.id(), 83);
+    assertThat(updated.previewStartSeconds()).isEqualTo(83);
+    assertThat(room.tracks()).containsExactly(updated);
+
+    room.removeTrack(room.hostPlayerId(), track.id());
+    assertThat(room.tracks()).isEmpty();
+  }
+
+  @Test
+  void playerCannotEditOrRemoveAnotherPlayersTrack() {
+    GameRoom room = new GameRoom("ABC123", "Host", 8, 30, "preview");
+    GameRoom.Player friend = room.addPlayer("Friend");
+    GameRoom.Track track = room.addTrack(room.hostPlayerId(), "abcdefghijk", "Song", "Channel", "thumb", 20);
+
+    assertThatThrownBy(() -> room.updateTrackTime(friend.id(), track.id(), 50))
+        .hasMessageContaining("próprias músicas");
+    assertThatThrownBy(() -> room.removeTrack(friend.id(), track.id()))
+        .hasMessageContaining("próprias músicas");
+  }
 }

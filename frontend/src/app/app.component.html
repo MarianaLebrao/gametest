@@ -58,6 +58,30 @@
             <button class="btn dark" [disabled]="!videoLink() || !canAddTrack() || isLoading()" (click)="addTrack()">{{ isLoading() ? 'Adicionando...' : canAddTrack() ? 'Adicionar música' : 'Limite de 5 músicas atingido' }}</button>
           </div>
           @if (errorMessage()) { <p class="error">{{ errorMessage() }}</p> }
+          @if (ownTracks().length > 0) {
+            <section class="my-tracks">
+              <h3>Suas músicas</h3>
+              @for (track of ownTracks(); track track.id) {
+                <article class="track-editor">
+                  @if (track.thumbnailUrl) { <img [src]="track.thumbnailUrl" alt="" /> }
+                  <div class="track-editor-content">
+                    <strong>{{ track.title }}</strong>
+                    <small>{{ track.channelTitle }}</small>
+                    <div class="track-time-edit">
+                      <span>Trecho:</span>
+                      <label><input type="number" inputmode="numeric" min="0" max="59" [value]="trackDraftMinutes(track)" (input)="onTrackMinutesInput(track, $any($event.target).value)" /> min</label>
+                      <span>:</span>
+                      <label><input type="number" inputmode="numeric" min="0" max="59" [value]="trackDraftSecondsPart(track)" (input)="onTrackSecondsInput(track, $any($event.target).value)" /> seg</label>
+                    </div>
+                    <div class="track-actions">
+                      <button class="save-track" [disabled]="!trackTimeChanged(track) || isLoading()" (click)="saveTrackTime(track)">Salvar tempo</button>
+                      <button class="delete-track" [disabled]="isLoading()" (click)="deleteTrack(track)">Excluir</button>
+                    </div>
+                  </div>
+                </article>
+              }
+            </section>
+          }
           <div class="list">
             @for (player of room()?.players ?? []; track player.id) {
               <div class="row"><span>{{ player.name }} @if (player.id === playerId()) { <small>(você)</small> } @if (player.id === room()?.hostPlayerId) { <small>anfitrião</small> }</span>

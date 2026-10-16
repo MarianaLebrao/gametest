@@ -91,6 +91,26 @@ public class GameRoom {
     return track;
   }
 
+  public synchronized Track updateTrackTime(String playerId, String trackId, int previewStartSeconds) {
+    requireLobby();
+    player(playerId);
+    int index = trackIndex(trackId);
+    Track current = tracks.get(index);
+    requireTrackOwner(current, playerId);
+    Track updated = new Track(current.id(), current.videoId(), current.title(), current.channelTitle(),
+        current.thumbnailUrl(), current.ownerPlayerId(), current.ownerName(), previewStartSeconds);
+    tracks.set(index, updated);
+    return updated;
+  }
+
+  public synchronized void removeTrack(String playerId, String trackId) {
+    requireLobby();
+    player(playerId);
+    int index = trackIndex(trackId);
+    requireTrackOwner(tracks.get(index), playerId);
+    tracks.remove(index);
+  }
+
   public synchronized boolean removePlayer(String requesterPlayerId, String targetPlayerId) {
     requireLobby();
     player(requesterPlayerId);
@@ -181,6 +201,19 @@ public class GameRoom {
   private Player player(String playerId) {
     return players.stream().filter(player -> player.id().equals(playerId)).findFirst()
         .orElseThrow(() -> new IllegalArgumentException("Player does not belong to this room."));
+  }
+
+  private int trackIndex(String trackId) {
+    for (int index = 0; index < tracks.size(); index++) {
+      if (tracks.get(index).id().equals(trackId)) return index;
+    }
+    throw new IllegalArgumentException("Música não encontrada nesta sala.");
+  }
+
+  private void requireTrackOwner(Track track, String playerId) {
+    if (!track.ownerPlayerId().equals(playerId)) {
+      throw new IllegalArgumentException("Você só pode editar ou excluir suas próprias músicas.");
+    }
   }
 
   private void requireHost(String playerId) {

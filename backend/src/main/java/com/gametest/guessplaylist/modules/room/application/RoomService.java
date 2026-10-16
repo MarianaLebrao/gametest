@@ -57,6 +57,20 @@ public class RoomService {
     return track;
   }
 
+  public synchronized GameRoom.Track updateTrackTime(String code, String playerId, String trackId,
+                                                       int previewStartSeconds) {
+    GameRoom room = find(code);
+    GameRoom.Track track = room.updateTrackTime(playerId, trackId, previewStartSeconds);
+    roomStore.save(room);
+    return track;
+  }
+
+  public synchronized void removeTrack(String code, String playerId, String trackId) {
+    GameRoom room = find(code);
+    room.removeTrack(playerId, trackId);
+    roomStore.save(room);
+  }
+
   public synchronized void removePlayer(String code, String requesterPlayerId, String targetPlayerId) {
     GameRoom room = find(code);
     if (room.removePlayer(requesterPlayerId, targetPlayerId)) roomStore.deleteByCode(room.code());
