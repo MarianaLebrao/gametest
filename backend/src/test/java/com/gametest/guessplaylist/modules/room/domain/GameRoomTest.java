@@ -107,15 +107,27 @@ class GameRoomTest {
   }
 
   @Test
-  void limitsEachPlayerToFiveTracks() {
+  void limitsEachPlayerToTenTracks() {
     GameRoom room = new GameRoom("ABC123", "Host", 8, 30, "preview");
-    for (int index = 0; index < 5; index++) {
+    for (int index = 0; index < 10; index++) {
       room.addTrack(room.hostPlayerId(), "video-id-" + index, "Song", "Channel", "thumb", 20);
     }
 
-    assertThatThrownBy(() -> room.addTrack(room.hostPlayerId(), "video-id-5", "Song", "Channel", "thumb", 20))
+    assertThatThrownBy(() -> room.addTrack(room.hostPlayerId(), "video-id-10", "Song", "Channel", "thumb", 20))
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("máximo 5 músicas");
+        .hasMessageContaining("máximo 10 músicas");
+  }
+
+  @Test
+  void requiresOneTrackForEveryConfiguredRound() {
+    GameRoom room = new GameRoom("ABC123", "Host", 5, 30, "preview");
+    GameRoom.Player friend = room.addPlayer("Friend");
+    room.addTrack(room.hostPlayerId(), "host-track1", "Song", "Channel", "thumb", 20);
+    room.addTrack(friend.id(), "friend-trk1", "Song", "Channel", "thumb", 20);
+
+    assertThatThrownBy(() -> room.start(room.hostPlayerId(),
+        room.tracks().stream().map(GameRoom.Track::id).toList()))
+        .hasMessageContaining("precisa de 5 músicas");
   }
 
   @Test

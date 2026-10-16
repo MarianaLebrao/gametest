@@ -9,7 +9,7 @@ import java.time.Instant;
 
 public class GameRoom {
   public static final int MAX_PLAYERS = 6;
-  public static final int MAX_TRACKS_PER_PLAYER = 5;
+  public static final int MAX_TRACKS_PER_PLAYER = 10;
 
   private final String code;
   private String hostPlayerId;
@@ -81,7 +81,7 @@ public class GameRoom {
     Player owner = player(playerId);
     long playerTrackCount = tracks.stream().filter(track -> track.ownerPlayerId().equals(playerId)).count();
     if (playerTrackCount >= MAX_TRACKS_PER_PLAYER) {
-      throw new IllegalArgumentException("Cada jogador pode adicionar no máximo 5 músicas.");
+      throw new IllegalArgumentException("Cada jogador pode adicionar no máximo 10 músicas.");
     }
     if (tracks.stream().anyMatch(track -> track.videoId().equals(videoId))) {
       throw new IllegalArgumentException("Essa música já foi adicionada por outro jogador. Escolha outra música.");
@@ -137,6 +137,10 @@ public class GameRoom {
         .allMatch(player -> tracks.stream().anyMatch(track -> track.ownerPlayerId().equals(player.id())));
     if (!everyoneAddedSong) {
       throw new IllegalArgumentException("Every player must add at least one song.");
+    }
+    if (tracks.size() < roundCount) {
+      throw new IllegalArgumentException("A sala precisa de " + roundCount + " músicas para jogar "
+          + roundCount + " rodadas.");
     }
     roundTrackIds.clear();
     roundTrackIds.addAll(shuffledTrackIds.stream().limit(roundCount).toList());

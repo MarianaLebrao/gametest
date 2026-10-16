@@ -224,10 +224,11 @@ export class AppComponent implements OnInit, OnDestroy {
   protected trackCountFor(playerId: string): number {
     return this.room()?.tracks.filter(track => track.ownerPlayerId === playerId).length ?? 0;
   }
-  protected canAddTrack(): boolean { return this.trackCountFor(this.playerId()) < 5; }
+  protected canAddTrack(): boolean { return this.trackCountFor(this.playerId()) < 10; }
   protected everyoneReady(): boolean {
     const room = this.room();
-    return !!room && room.players.length >= 2 && room.players.every(player => this.trackCountFor(player.id) > 0);
+    return !!room && room.players.length >= 2 && room.tracks.length >= room.roundCount
+      && room.players.every(player => this.trackCountFor(player.id) > 0);
   }
   protected sortedPlayers(): Player[] {
     const room = this.room();
