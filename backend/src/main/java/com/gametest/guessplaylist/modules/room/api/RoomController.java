@@ -46,7 +46,22 @@ public class RoomController {
 
   @PostMapping("/{code}/tracks")
   public TrackView addTrack(@PathVariable String code, @Valid @RequestBody AddTrackInput input) {
-    return TrackView.from(roomService.addTrack(code, input.playerId(), input.videoUrl()));
+    return TrackView.from(roomService.addTrack(code, input.playerId(), input.videoUrl(), input.previewStartSeconds()), true);
+  }
+
+  @PostMapping("/{code}/start")
+  public RoomView start(@PathVariable String code, @Valid @RequestBody PlayerActionInput input) {
+    return RoomView.from(roomService.start(code, input.playerId()));
+  }
+
+  @PostMapping("/{code}/votes")
+  public RoomView vote(@PathVariable String code, @Valid @RequestBody VoteInput input) {
+    return RoomView.from(roomService.vote(code, input.playerId(), input.targetPlayerId()));
+  }
+
+  @PostMapping("/{code}/advance")
+  public RoomView advance(@PathVariable String code, @Valid @RequestBody PlayerActionInput input) {
+    return RoomView.from(roomService.advance(code, input.playerId()));
   }
 
   public record CreateRoomInput(
@@ -56,14 +71,25 @@ public class RoomController {
       @NotBlank @Pattern(regexp = "preview|blind") String gameMode) {}
 
   public record JoinRoomInput(@NotBlank @Size(max = 30) String playerName) {}
-  public record AddTrackInput(@NotBlank String playerId, @NotBlank String videoUrl) {}
+  public record AddTrackInput(@NotBlank String playerId, @NotBlank String videoUrl,
+                              @Min(0) @Max(3600) int previewStartSeconds) {}
+  public record PlayerActionInput(@NotBlank String playerId) {}
+  public record VoteInput(@NotBlank String playerId, @NotBlank String targetPlayerId) {}
 
   public record RoomView(String code, String hostPlayerId, int roundCount, int roundTimer, String gameMode,
-                         List<PlayerView> players, List<TrackView> tracks) {
+                         String status, int currentRound, int totalRounds, List<PlayerView> players,
+                         List<TrackView> tracks, TrackView currentTrack, List<String> votedPlayerIds,
+                         java.util.Map<String, Integer> scores) {
     static RoomView from(GameRoom room) {
+      boolean revealCurrentTrack = !"PLAYING".equals(room.status());
+      List<TrackView> visibleTracks = "LOBBY".equals(room.status())
+          ? room.tracks().stream().map(track -> TrackView.from(track, true)).toList()
+          : List.of();
       return new RoomView(room.code(), room.hostPlayerId(), room.roundCount(), room.roundTimer(), room.gameMode(),
-          room.players().stream().map(PlayerView::from).toList(),
-          room.tracks().stream().map(TrackView::from).toList());
+          room.status(), room.currentRound(), room.roundTrackIds().size(),
+          room.players().stream().map(PlayerView::from).toList(), visibleTracks,
+          TrackView.from(room.currentTrack(), revealCurrentTrack),
+          room.votes().keySet().stream().toList(), room.scores());
     }
   }
 
@@ -72,10 +98,13 @@ public class RoomController {
   }
 
   public record TrackView(String id, String videoId, String title, String channelTitle, String thumbnailUrl,
-                          String ownerPlayerId, String ownerName) {
-    static TrackView from(GameRoom.Track track) {
-      return new TrackView(track.id(), track.videoId(), track.title(), track.channelTitle(), track.thumbnailUrl(),
-          track.ownerPlayerId(), track.ownerName());
+                          String ownerPlayerId, String ownerName, int previewStartSeconds) {
+    static TrackView from(GameRoom.Track track, boolean reveal) {
+      if (track == null) return null;
+      return new TrackView(track.id(), track.videoId(), reveal ? track.title() : null,
+          reveal ? track.channelTitle() : null, reveal ? track.thumbnailUrl() : null,
+          reveal ? track.ownerPlayerId() : null, reveal ? track.ownerName() : null,
+          track.previewStartSeconds());
     }
   }
 }

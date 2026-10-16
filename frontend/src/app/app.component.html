@@ -2,99 +2,121 @@
   @switch (currentScreen()) {
     @case ('home') {
       <section class="card">
-        <header class="hero"><div class="logo">♪</div><h1>WhoAddedThat?</h1><p>Guess who added each song</p></header>
+        <header class="hero"><div class="logo">♪</div><h1>WhoAddedThat?</h1><p>Adivinhe quem adicionou cada música</p></header>
         <main class="body">
-          <label class="label">Your name</label>
-          <input class="input" placeholder="How should friends see you?" [value]="playerName()" (input)="onPlayerNameInput($any($event.target).value)" />
-          <button class="btn primary" [disabled]="!playerName().trim()" (click)="setScreen('create')">Create Room</button>
-          <div class="divider"><span>or join a room</span></div>
-          <input class="input code-input" placeholder="ROOM CODE" [value]="roomCode()" (input)="onRoomCodeInput($any($event.target).value)" />
-          <button class="btn dark" [disabled]="!playerName().trim() || roomCode().length !== 6 || isLoading()" (click)="joinRoom()">{{ isLoading() ? 'Joining...' : 'Join Room' }}</button>
+          <label class="label">Seu nome</label>
+          <input class="input" placeholder="Como seus amigos vão te ver?" [value]="playerName()" (input)="onPlayerNameInput($any($event.target).value)" />
+          <button class="btn primary" [disabled]="!playerName().trim()" (click)="setScreen('create')">Criar sala</button>
+          <div class="divider"><span>ou entre em uma sala</span></div>
+          <input class="input code-input" placeholder="CÓDIGO DA SALA" [value]="roomCode()" (input)="onRoomCodeInput($any($event.target).value)" />
+          <button class="btn dark" [disabled]="!playerName().trim() || roomCode().length !== 6 || isLoading()" (click)="joinRoom()">{{ isLoading() ? 'Entrando...' : 'Entrar na sala' }}</button>
           @if (errorMessage()) { <p class="error">{{ errorMessage() }}</p> }
         </main>
       </section>
     }
     @case ('create') {
       <section class="card">
-        <header class="hero small"><button class="back" (click)="setScreen('home')">←</button><h1>Create Room</h1></header>
+        <header class="hero small"><button class="back" (click)="setScreen('home')">←</button><h1>Criar sala</h1></header>
         <main class="body">
           <div class="settings">
-            <h3>Game Settings</h3>
-            <p class="label">Number of Rounds</p>
+            <h3>Configurações da partida</h3>
+            <p class="label">Número máximo de rodadas</p>
             <div class="inline-grid">@for (n of [5, 8, 10, 15]; track n) { <button class="mini-btn" [class.active]="roundCount() === n" (click)="setRoundCount(n)">{{ n }}</button> }</div>
-            <p class="label">Round Timer</p>
+            <p class="label">Tempo por rodada</p>
             <div class="inline-grid">@for (sec of [15, 30, 45, 60]; track sec) { <button class="mini-btn" [class.active]="roundTimer() === sec" (click)="setRoundTimer(sec)">{{ sec }}s</button> }</div>
-            <p class="label">Game Mode</p>
+            <p class="label">Modo</p>
             <div class="inline-grid">
-              <button class="mini-btn wide" [class.active]="gameMode() === 'preview'" (click)="setGameMode('preview')">Preview</button>
-              <button class="mini-btn wide" [class.active]="gameMode() === 'blind'" (click)="setGameMode('blind')">Blind</button>
+              <button class="mini-btn wide" [class.active]="gameMode() === 'preview'" (click)="setGameMode('preview')">Trecho</button>
+              <button class="mini-btn wide" [class.active]="gameMode() === 'blind'" (click)="setGameMode('blind')">Às cegas</button>
             </div>
           </div>
-          <p class="muted">No Spotify or Google login required. Everyone adds their own YouTube songs after joining.</p>
+          <p class="muted">De 2 a 6 jogadores. Ninguém precisa fazer login: cada pessoa adiciona suas músicas do YouTube.</p>
           @if (errorMessage()) { <p class="error">{{ errorMessage() }}</p> }
-          <button class="btn primary" [disabled]="isLoading()" (click)="createRoom()">{{ isLoading() ? 'Creating...' : 'Create & Invite Friends' }}</button>
+          <button class="btn primary" [disabled]="isLoading()" (click)="createRoom()">{{ isLoading() ? 'Criando...' : 'Criar e convidar amigos' }}</button>
         </main>
       </section>
     }
     @case ('lobby') {
       <section class="card">
-        <header class="hero small stacked"><span class="eyebrow">ROOM CODE</span><h1 class="room-code">{{ room()?.code }}</h1></header>
+        <header class="hero small stacked"><span class="eyebrow">CÓDIGO DA SALA</span><h1 class="room-code">{{ room()?.code }}</h1><span class="capacity">{{ room()?.players?.length }}/6 jogadores</span></header>
         <main class="body">
-          <button class="btn ghost" (click)="copyInvite()">{{ copied() ? 'Invite copied!' : 'Copy invite link' }}</button>
+          <button class="btn ghost" (click)="copyInvite()">{{ copied() ? 'Convite copiado!' : 'Copiar link de convite' }}</button>
           <div class="submission-box">
-            <strong>Add your songs</strong><p class="muted">Paste at least one public YouTube video link.</p>
+            <strong>Adicione suas músicas</strong>
+            <p class="muted">Cole um vídeo público e marque quando começa o refrão ou melhor trecho.</p>
             <input class="input" placeholder="https://youtube.com/watch?v=..." [value]="videoLink()" (input)="onVideoLinkInput($any($event.target).value)" />
-            <button class="btn dark" [disabled]="!videoLink() || isLoading()" (click)="addTrack()">{{ isLoading() ? 'Adding...' : 'Add song' }}</button>
+            <label class="timestamp-label"><span>Melhor trecho começa em</span><span class="timestamp-input"><input type="number" min="0" max="3600" [value]="previewStartSeconds()" (input)="onPreviewStartInput($any($event.target).value)" /> segundos</span></label>
+            <button class="btn dark" [disabled]="!videoLink() || isLoading()" (click)="addTrack()">{{ isLoading() ? 'Adicionando...' : 'Adicionar música' }}</button>
           </div>
           @if (errorMessage()) { <p class="error">{{ errorMessage() }}</p> }
           <div class="list">
             @for (player of room()?.players ?? []; track player.id) {
-              <div class="row"><span>{{ player.name }} @if (player.id === playerId()) { <small>(you)</small> }</span>
-                <span class="song-count" [class.ready]="trackCountFor(player.id) > 0">{{ trackCountFor(player.id) }} song{{ trackCountFor(player.id) === 1 ? '' : 's' }}</span>
+              <div class="row"><span>{{ player.name }} @if (player.id === playerId()) { <small>(você)</small> }</span>
+                <span class="song-count" [class.ready]="trackCountFor(player.id) > 0">{{ trackCountFor(player.id) }} música{{ trackCountFor(player.id) === 1 ? '' : 's' }}</span>
               </div>
             }
           </div>
           @if (isHost()) {
-            <button class="btn primary" [disabled]="!everyoneReady()" (click)="setScreen('gameroom')">Start Game</button>
-            @if (!everyoneReady()) { <p class="status">Waiting for every player to add a song.</p> }
-          } @else { <p class="status">The host will start when everyone is ready.</p> }
+            <button class="btn primary" [disabled]="!everyoneReady() || isLoading()" (click)="startGame()">{{ isLoading() ? 'Iniciando...' : 'Começar partida' }}</button>
+            @if (!everyoneReady()) { <p class="status">Precisamos de pelo menos 2 jogadores e uma música de cada pessoa.</p> }
+          } @else { <p class="status">A partida começa quando todos adicionarem pelo menos uma música.</p> }
         </main>
       </section>
     }
-    @case ('gameroom') {
-      <section class="card"><header class="hero small"><h1>Ready to Play</h1></header><main class="body center">
-        <p class="muted">{{ room()?.roundCount }} rounds • {{ room()?.roundTimer }}s • {{ room()?.gameMode }} mode</p>
-        <p class="muted">{{ room()?.tracks?.length }} songs from {{ room()?.players?.length }} players</p>
-        <button class="btn primary" (click)="setScreen('round')">Play first round</button>
-      </main></section>
-    }
     @case ('round') {
-      <section class="card"><header class="hero small"><h1>Round 1</h1></header><main class="body">
-        <h2>Who added this song?</h2>
-        @if (currentTrack(); as track) {
-          @if (track.thumbnailUrl) { <img class="track-cover" [src]="track.thumbnailUrl" alt="Video thumbnail" /> }
-          <p><strong>{{ track.title }}</strong></p><p class="muted">{{ track.channelTitle }}</p>
-        }
-        <div class="grid">@for (player of room()?.players ?? []; track player.id) {
-          <button class="tile" [class.selected]="selectedVote() === player.id" (click)="selectedVote.set(player.id)">{{ player.name }}</button>
-        }</div>
-        <button class="btn primary" [disabled]="!selectedVote()" (click)="setScreen('voting')">Submit Vote</button>
-      </main></section>
-    }
-    @case ('voting') {
-      <section class="card"><header class="hero small"><h1>Vote Submitted</h1></header><main class="body center"><p class="muted">Waiting for other players...</p><button class="btn primary" (click)="setScreen('result')">View Result</button></main></section>
+      <section class="card game-card">
+        <header class="hero small round-head"><span>Rodada {{ (room()?.currentRound ?? 0) + 1 }}/{{ room()?.totalRounds }}</span><strong class="timer">{{ secondsLeft() }}s</strong></header>
+        <main class="body">
+          <div class="mystery-disc"><span>?</span></div>
+          <div class="center"><h2>Quem adicionou essa música?</h2><p class="muted">Ouça o trecho e escolha uma pessoa.</p></div>
+          @if (!previewVisible()) {
+            <button class="btn listen" (click)="playPreview()">▶ Reproduzir melhor trecho</button>
+          } @else {
+            @if (previewUrl(); as url) {
+              <div class="player-shell"><iframe [src]="url" title="Trecho da música" allow="autoplay; encrypted-media" referrerpolicy="strict-origin-when-cross-origin"></iframe><span>Trecho tocando pelo YouTube</span></div>
+            }
+          }
+          <div class="grid">@for (player of room()?.players ?? []; track player.id) {
+            <button class="tile" [class.selected]="selectedVote() === player.id" [disabled]="hasVoted()" (click)="selectedVote.set(player.id)">{{ player.name }}</button>
+          }</div>
+          @if (hasVoted()) {
+            <p class="waiting">✓ Voto enviado. Aguardando {{ (room()?.players?.length ?? 0) - (room()?.votedPlayerIds?.length ?? 0) }} jogador(es)...</p>
+          } @else {
+            <button class="btn primary" [disabled]="!selectedVote() || isLoading()" (click)="submitVote()">Confirmar palpite</button>
+          }
+          @if (errorMessage()) { <p class="error">{{ errorMessage() }}</p> }
+        </main>
+      </section>
     }
     @case ('result') {
-      <section class="card"><header class="hero small"><h1>Round Result</h1></header><main class="body center"><p class="muted">Added by</p><h2>{{ currentTrack()?.ownerName }}</h2><button class="btn primary" (click)="setScreen('scoreboard')">Next</button></main></section>
-    }
-    @case ('scoreboard') {
-      <section class="card"><header class="hero small"><h1>Scoreboard</h1></header><main class="body">
-        @for (player of room()?.players ?? []; track player.id; let rank = $index) { <div class="row"><span>{{ rank + 1 }}. {{ player.name }}</span><strong>{{ rank === 0 ? 100 : 0 }}</strong></div> }
-        <button class="btn primary" (click)="setScreen('final')">Continue</button>
-      </main></section>
+      <section class="card">
+        <header class="hero small"><h1>Resultado da rodada</h1></header>
+        <main class="body center">
+          @if (room()?.currentTrack; as track) {
+            @if (track.thumbnailUrl) { <img class="track-cover" [src]="track.thumbnailUrl" alt="Capa do vídeo" /> }
+            <p class="reveal-label">A música era</p><h2>{{ track.title }}</h2><p class="muted">{{ track.channelTitle }}</p>
+            <div class="owner-reveal"><span>Adicionada por</span><strong>{{ track.ownerName }}</strong></div>
+          }
+          <div class="score-list">@for (player of sortedPlayers(); track player.id; let rank = $index) {
+            <div class="row"><span>{{ rank + 1 }}. {{ player.name }}</span><strong>{{ scoreFor(player.id) }} pts</strong></div>
+          }</div>
+          @if (isHost()) {
+            <button class="btn primary" [disabled]="isLoading()" (click)="advanceRound()">{{ (room()?.currentRound ?? 0) + 1 >= (room()?.totalRounds ?? 0) ? 'Ver resultado final' : 'Próxima rodada' }}</button>
+          } @else { <p class="status">Aguardando o anfitrião iniciar a próxima rodada.</p> }
+          @if (errorMessage()) { <p class="error">{{ errorMessage() }}</p> }
+        </main>
+      </section>
     }
     @case ('final') {
-      <section class="card"><header class="hero small"><h1>Game Over</h1></header><main class="body center"><h2>Thanks for playing!</h2><button class="btn ghost" (click)="setScreen('home')">Back Home</button></main></section>
+      <section class="card">
+        <header class="hero"><div class="trophy">★</div><h1>Fim de jogo!</h1><p>Placar final</p></header>
+        <main class="body">
+          <div class="score-list final-score">@for (player of sortedPlayers(); track player.id; let rank = $index) {
+            <div class="row" [class.winner]="rank === 0"><span><b>{{ rank + 1 }}º</b> {{ player.name }}</span><strong>{{ scoreFor(player.id) }} pts</strong></div>
+          }</div>
+          <button class="btn ghost" (click)="setScreen('home')">Voltar ao início</button>
+        </main>
+      </section>
     }
   }
 </div></div>
