@@ -1,1 +1,6 @@
 /* You can add global styles to this file, and also import other style files */
+@import '@fontsource-variable/nunito-sans/wght.css';
+
+html { font-family: 'Nunito Sans Variable', sans-serif; font-synthesis: none; }
+body { margin: 0; }
+button, input { font: inherit; }
