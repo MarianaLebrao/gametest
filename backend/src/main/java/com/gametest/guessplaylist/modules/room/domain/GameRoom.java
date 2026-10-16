@@ -70,6 +70,7 @@ public class GameRoom {
     }
     Player player = new Player(UUID.randomUUID().toString(), name);
     players.add(player);
+    if (players.size() == 1) hostPlayerId = player.id();
     scores.put(player.id(), 0);
     return player;
   }
@@ -111,7 +112,7 @@ public class GameRoom {
     tracks.remove(index);
   }
 
-  public synchronized boolean removePlayer(String requesterPlayerId, String targetPlayerId) {
+  public synchronized void removePlayer(String requesterPlayerId, String targetPlayerId) {
     requireLobby();
     player(requesterPlayerId);
     player(targetPlayerId);
@@ -124,7 +125,6 @@ public class GameRoom {
     votes.remove(targetPlayerId);
     votes.entrySet().removeIf(entry -> entry.getValue().equals(targetPlayerId));
     if (targetPlayerId.equals(hostPlayerId) && !players.isEmpty()) hostPlayerId = players.getFirst().id();
-    return players.isEmpty();
   }
 
   public synchronized void start(String playerId, List<String> shuffledTrackIds) {

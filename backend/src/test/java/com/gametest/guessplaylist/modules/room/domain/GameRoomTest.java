@@ -78,9 +78,21 @@ class GameRoomTest {
     GameRoom.Player friend = room.addPlayer("Friend");
     room.addTrack(room.hostPlayerId(), "abcdefghijk", "A song", "A channel", "thumb", 20);
 
-    assertThat(room.removePlayer(room.hostPlayerId(), room.hostPlayerId())).isFalse();
+    room.removePlayer(room.hostPlayerId(), room.hostPlayerId());
     assertThat(room.hostPlayerId()).isEqualTo(friend.id());
     assertThat(room.tracks()).isEmpty();
+  }
+
+  @Test
+  void keepsEmptyRoomAndMakesNextPlayerTheHost() {
+    GameRoom room = new GameRoom("ABC123", "Host", 8, 30, "preview");
+    String previousHostId = room.hostPlayerId();
+    room.removePlayer(previousHostId, previousHostId);
+
+    GameRoom.Player replacement = room.addPlayer("New host");
+
+    assertThat(room.players()).containsExactly(replacement);
+    assertThat(room.hostPlayerId()).isEqualTo(replacement.id());
   }
 
   @Test
