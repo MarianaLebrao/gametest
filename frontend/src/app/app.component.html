@@ -149,6 +149,12 @@
           <div class="score-list final-score">@for (player of sortedPlayers(); track player.id; let rank = $index) {
             <div class="row" [class.winner]="rank === 0"><span><b>{{ rank + 1 }}º</b> {{ player.name }}</span><strong>{{ scoreFor(player.id) }} pts</strong></div>
           }</div>
+          @if (isHost()) {
+            <button class="btn primary" [disabled]="isLoading()" (click)="rematch()">{{ isLoading() ? 'Voltando...' : 'Jogar novamente' }}</button>
+            <p class="status">Todos voltarão ao lobby e poderão trocar ou editar suas músicas.</p>
+          } @else {
+            <p class="status">Aguardando o anfitrião iniciar uma nova partida.</p>
+          }
           <button class="btn ghost" (click)="leaveRoom()">Sair da sala</button>
         </main>
       </section>

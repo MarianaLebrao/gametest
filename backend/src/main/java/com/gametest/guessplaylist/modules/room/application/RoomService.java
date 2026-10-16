@@ -100,6 +100,13 @@ public class RoomService {
     return room;
   }
 
+  public synchronized GameRoom rematch(String code, String playerId) {
+    GameRoom room = find(code);
+    room.rematch(playerId);
+    roomStore.save(room);
+    return room;
+  }
+
   private String randomCode() {
     StringBuilder code = new StringBuilder(6);
     for (int index = 0; index < 6; index++) {

@@ -55,6 +55,13 @@ class GameRoomTest {
     assertThat(room.scores()).containsEntry(room.hostPlayerId(), 100).containsEntry(friend.id(), 100);
     room.advance(room.hostPlayerId());
     assertThat(room.status()).isEqualTo("FINISHED");
+
+    room.rematch(room.hostPlayerId());
+    assertThat(room.status()).isEqualTo("LOBBY");
+    assertThat(room.players()).hasSize(2);
+    assertThat(room.tracks()).hasSize(2);
+    assertThat(room.roundTrackIds()).isEmpty();
+    assertThat(room.scores().values()).containsOnly(0);
   }
 
   @Test

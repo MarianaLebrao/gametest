@@ -210,6 +210,10 @@ export class AppComponent implements OnInit, OnDestroy {
     await this.roomAction('advance', { playerId: this.playerId() }, 'Could not advance the round.');
   }
 
+  protected async rematch(): Promise<void> {
+    await this.roomAction('rematch', { playerId: this.playerId() }, 'Não foi possível voltar ao lobby.');
+  }
+
   protected async copyInvite(): Promise<void> {
     await navigator.clipboard.writeText(`Join my WhoAddedThat? room: ${this.inviteUrl()}`);
     this.copied.set(true);

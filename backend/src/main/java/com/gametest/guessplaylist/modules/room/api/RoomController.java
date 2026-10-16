@@ -89,6 +89,11 @@ public class RoomController {
     return RoomView.from(roomService.advance(code, input.playerId()));
   }
 
+  @PostMapping("/{code}/rematch")
+  public RoomView rematch(@PathVariable String code, @Valid @RequestBody PlayerActionInput input) {
+    return RoomView.from(roomService.rematch(code, input.playerId()));
+  }
+
   public record CreateRoomInput(
       @NotBlank @Size(max = 30) String hostName,
       @Min(1) @Max(50) int roundCount,

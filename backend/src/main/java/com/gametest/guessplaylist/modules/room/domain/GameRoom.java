@@ -178,6 +178,19 @@ public class GameRoom {
     roundEndsAt = "PLAYING".equals(status) ? Instant.now().plusSeconds(roundTimer) : null;
   }
 
+  public synchronized void rematch(String playerId) {
+    requireHost(playerId);
+    if (!"FINISHED".equals(status)) {
+      throw new IllegalArgumentException("A revanche só pode começar depois do fim da partida.");
+    }
+    status = "LOBBY";
+    currentRound = 0;
+    roundTrackIds.clear();
+    votes.clear();
+    scores.replaceAll((ignored, score) -> 0);
+    roundEndsAt = null;
+  }
+
   public synchronized boolean finishRoundIfExpired(Instant now) {
     if (!"PLAYING".equals(status) || roundEndsAt == null || now.isBefore(roundEndsAt)) return false;
     scoreRound();
