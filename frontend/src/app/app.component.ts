@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, ViewChild, inject, signal } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { firstValueFrom } from 'rxjs';
 
@@ -28,6 +28,7 @@ interface SavedSession { roomCode: string; playerId: string; playerName: string;
   styleUrl: './app.component.css'
 })
 export class AppComponent implements OnInit, OnDestroy {
+  @ViewChild('youtubePlayer') private youtubePlayer?: ElementRef<HTMLIFrameElement>;
   private readonly http = inject(HttpClient);
   private readonly sanitizer = inject(DomSanitizer);
   private readonly apiBase = 'https://gametest-0trr.onrender.com/api';
@@ -48,6 +49,8 @@ export class AppComponent implements OnInit, OnDestroy {
   protected readonly copied = signal(false);
   protected readonly selectedVote = signal<string | null>(null);
   protected readonly activePreviewUrl = signal<SafeResourceUrl | null>(null);
+  protected readonly previewPlaying = signal(false);
+  protected readonly previewVolume = signal(70);
   protected readonly secondsLeft = signal(30);
   protected readonly roundCount = signal(8);
   protected readonly roundTimer = signal(30);
@@ -248,8 +251,25 @@ export class AppComponent implements OnInit, OnDestroy {
     const start = track.previewStartSeconds;
     const end = start + Math.min(this.room()?.roundTimer ?? 30, 60);
     this.activePreviewUrl.set(this.sanitizer.bypassSecurityTrustResourceUrl(
-      `https://www.youtube-nocookie.com/embed/${track.videoId}?autoplay=1&start=${start}&end=${end}&controls=0&rel=0&playsinline=1`
+      `https://www.youtube-nocookie.com/embed/${track.videoId}?autoplay=1&start=${start}&end=${end}&controls=0&rel=0&playsinline=1&enablejsapi=1&origin=${encodeURIComponent(window.location.origin)}`
     ));
+    this.previewPlaying.set(true);
+  }
+  protected onPreviewPlayerLoad(): void {
+    setTimeout(() => {
+      this.sendYouTubeCommand('setVolume', [this.previewVolume()]);
+      this.sendYouTubeCommand('playVideo');
+    }, 150);
+  }
+  protected togglePreviewPlayback(): void {
+    const shouldPlay = !this.previewPlaying();
+    this.sendYouTubeCommand(shouldPlay ? 'playVideo' : 'pauseVideo');
+    this.previewPlaying.set(shouldPlay);
+  }
+  protected onPreviewVolumeInput(value: string): void {
+    const volume = Math.max(0, Math.min(100, Math.trunc(Number(value) || 0)));
+    this.previewVolume.set(volume);
+    this.sendYouTubeCommand('setVolume', [volume]);
   }
 
   private async roomAction(path: string, body: object, fallback: string): Promise<void> {
@@ -290,6 +310,7 @@ export class AppComponent implements OnInit, OnDestroy {
       this.lastRoundKey = roundKey;
       this.selectedVote.set(null);
       this.activePreviewUrl.set(null);
+      this.previewPlaying.set(false);
       if (room.status === 'PLAYING') this.startRoundClock(room.roundEndsAt);
       else this.stopRoundClock();
     }
@@ -350,6 +371,12 @@ export class AppComponent implements OnInit, OnDestroy {
 
   private setTrackDraft(trackId: string, seconds: number): void {
     this.trackTimeDrafts.update(drafts => ({ ...drafts, [trackId]: seconds }));
+  }
+
+  private sendYouTubeCommand(func: string, args: unknown[] = []): void {
+    this.youtubePlayer?.nativeElement.contentWindow?.postMessage(JSON.stringify({
+      event: 'command', func, args
+    }), '*');
   }
 
   private readSession(): SavedSession | null {

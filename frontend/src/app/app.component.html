@@ -108,7 +108,14 @@
             <button class="btn listen" (click)="playPreview()">▶ Reproduzir melhor trecho</button>
           } @else {
             @if (activePreviewUrl(); as url) {
-              <div class="player-shell"><iframe [src]="url" title="Trecho da música" allow="autoplay; encrypted-media" referrerpolicy="strict-origin-when-cross-origin"></iframe><span>Trecho tocando pelo YouTube</span></div>
+              <div class="player-shell">
+                <iframe #youtubePlayer [src]="url" (load)="onPreviewPlayerLoad()" title="Trecho da música" allow="autoplay; encrypted-media" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+                <div class="audio-controls">
+                  <button type="button" (click)="togglePreviewPlayback()">{{ previewPlaying() ? 'Pausar' : 'Reproduzir' }}</button>
+                  <label><span>Volume</span><input type="range" min="0" max="100" step="5" [value]="previewVolume()" (input)="onPreviewVolumeInput($any($event.target).value)" /><output>{{ previewVolume() }}%</output></label>
+                </div>
+                <span>O cronômetro continua enquanto a música estiver pausada.</span>
+              </div>
             }
           }
           <div class="grid">@for (player of room()?.players ?? []; track player.id) {
