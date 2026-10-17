@@ -4,6 +4,13 @@
   font-family: 'Nunito Sans Variable', sans-serif;
 }
 
+.room-menu { position: fixed; z-index: 20; top: max(14px, env(safe-area-inset-top)); right: max(14px, calc((100vw - 520px) / 2 + 14px)); }
+.room-menu-trigger { width: 42px; height: 42px; border: 1px solid rgba(255,255,255,.35); border-radius: 50%; color: #fff; background: rgba(17,24,39,.82); box-shadow: 0 8px 24px rgba(17,24,39,.25); font-size: 18px; font-weight: 900; letter-spacing: 1px; cursor: pointer; backdrop-filter: blur(10px); }
+.room-menu-panel { position: absolute; top: 48px; right: 0; min-width: 170px; padding: 8px; border: 1px solid #e5e7eb; border-radius: 14px; display: grid; gap: 6px; color: #111827; background: #fff; box-shadow: 0 16px 38px rgba(17,24,39,.22); }
+.room-menu-panel span { padding: 6px 9px 3px; color: #6b7280; font-size: 12px; font-weight: 700; }
+.room-menu-panel button { border: 0; border-radius: 9px; padding: 10px; color: #b91c1c; background: #fef2f2; font: inherit; font-weight: 800; text-align: left; cursor: pointer; }
+.room-menu-panel button:disabled { opacity: .55; cursor: wait; }
+
 * {
   box-sizing: border-box;
 }

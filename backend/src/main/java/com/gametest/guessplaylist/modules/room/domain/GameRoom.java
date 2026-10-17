@@ -113,18 +113,34 @@ public class GameRoom {
   }
 
   public synchronized void removePlayer(String requesterPlayerId, String targetPlayerId) {
-    requireLobby();
     player(requesterPlayerId);
     player(targetPlayerId);
     if (!requesterPlayerId.equals(targetPlayerId) && !hostPlayerId.equals(requesterPlayerId)) {
       throw new IllegalArgumentException("Apenas o anfitrião pode remover outro jogador.");
     }
+    Track current = currentTrack();
+    String currentTrackId = current == null ? null : current.id();
+    boolean currentTrackBelongsToTarget = current != null && current.ownerPlayerId().equals(targetPlayerId);
     players.removeIf(player -> player.id().equals(targetPlayerId));
-    tracks.removeIf(track -> track.ownerPlayerId().equals(targetPlayerId));
+    if ("LOBBY".equals(status) || "FINISHED".equals(status)) {
+      tracks.removeIf(track -> track.ownerPlayerId().equals(targetPlayerId));
+    } else {
+      List<String> targetTrackIds = tracks.stream()
+          .filter(track -> track.ownerPlayerId().equals(targetPlayerId) && !track.id().equals(currentTrackId))
+          .map(Track::id)
+          .toList();
+      roundTrackIds.removeIf(targetTrackIds::contains);
+      tracks.removeIf(track -> targetTrackIds.contains(track.id()));
+    }
     scores.remove(targetPlayerId);
     votes.remove(targetPlayerId);
     votes.entrySet().removeIf(entry -> entry.getValue().equals(targetPlayerId));
     if (targetPlayerId.equals(hostPlayerId) && !players.isEmpty()) hostPlayerId = players.getFirst().id();
+    if ("PLAYING".equals(status) && (currentTrackBelongsToTarget || votes.size() >= players.size())) {
+      scoreRound();
+      status = "RESULTS";
+      roundEndsAt = null;
+    }
   }
 
   public synchronized void start(String playerId, List<String> shuffledTrackIds) {
@@ -188,6 +204,7 @@ public class GameRoom {
     roundTrackIds.clear();
     votes.clear();
     scores.replaceAll((ignored, score) -> 0);
+    tracks.removeIf(track -> players.stream().noneMatch(player -> player.id().equals(track.ownerPlayerId())));
     roundEndsAt = null;
   }
 

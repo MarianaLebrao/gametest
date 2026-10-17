@@ -114,6 +114,40 @@ class GameRoomTest {
   }
 
   @Test
+  void letsPlayerLeaveAfterVotingAndFinishesRoundForRemainingPlayers() {
+    GameRoom room = new GameRoom("ABC123", "Host", 1, 30, "preview");
+    GameRoom.Player friend = room.addPlayer("Friend");
+    GameRoom.Track track = room.addTrack(room.hostPlayerId(), "abcdefghijk", "Song", "Channel", "thumb", 20);
+    room.addTrack(friend.id(), "12345678901", "Other", "Channel", "thumb", 20);
+    room.start(room.hostPlayerId(), java.util.List.of(track.id()));
+    room.submitVote(friend.id(), room.hostPlayerId());
+
+    room.removePlayer(friend.id(), friend.id());
+
+    assertThat(room.players()).hasSize(1);
+    assertThat(room.status()).isEqualTo("PLAYING");
+    room.submitVote(room.hostPlayerId(), room.hostPlayerId());
+    assertThat(room.status()).isEqualTo("RESULTS");
+  }
+
+  @Test
+  void transfersHostWhenHostLeavesDuringResults() {
+    GameRoom room = new GameRoom("ABC123", "Host", 1, 30, "preview");
+    String hostId = room.hostPlayerId();
+    GameRoom.Player friend = room.addPlayer("Friend");
+    GameRoom.Track track = room.addTrack(hostId, "abcdefghijk", "Song", "Channel", "thumb", 20);
+    room.addTrack(friend.id(), "12345678901", "Other", "Channel", "thumb", 20);
+    room.start(hostId, java.util.List.of(track.id()));
+    room.submitVote(hostId, hostId);
+    room.submitVote(friend.id(), hostId);
+
+    room.removePlayer(hostId, hostId);
+
+    assertThat(room.hostPlayerId()).isEqualTo(friend.id());
+    assertThat(room.status()).isEqualTo("RESULTS");
+  }
+
+  @Test
   void limitsEachPlayerToTenTracks() {
     GameRoom room = new GameRoom("ABC123", "Host", 8, 30, "preview");
     for (int index = 0; index < 10; index++) {

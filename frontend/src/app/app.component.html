@@ -1,4 +1,15 @@
 <div class="app-bg"><div class="container">
+  @if (room() && playerId()) {
+    <div class="room-menu">
+      <button class="room-menu-trigger" type="button" aria-label="Opções da sala" [attr.aria-expanded]="roomMenuOpen()" (click)="roomMenuOpen.set(!roomMenuOpen())">•••</button>
+      @if (roomMenuOpen()) {
+        <div class="room-menu-panel">
+          <span>{{ playerName() }}</span>
+          <button type="button" [disabled]="isLoading()" (click)="leaveRoom()">Sair da sala</button>
+        </div>
+      }
+    </div>
+  }
   @switch (currentScreen()) {
     @case ('home') {
       <section class="card">
@@ -94,7 +105,6 @@
             <button class="btn primary" [disabled]="!everyoneReady() || isLoading()" (click)="startGame()">{{ isLoading() ? 'Iniciando...' : 'Começar partida' }}</button>
             @if (!everyoneReady()) { <p class="status">Precisamos de pelo menos 2 jogadores, uma música de cada pessoa e {{ room()?.roundCount }} músicas no total.</p> }
           } @else { <p class="status">A partida começa quando todos adicionarem pelo menos uma música.</p> }
-          <button class="btn ghost leave" [disabled]="isLoading()" (click)="leaveRoom()">Sair da sala</button>
         </main>
       </section>
     }
@@ -162,7 +172,6 @@
           } @else {
             <p class="status">Aguardando o anfitrião iniciar uma nova partida.</p>
           }
-          <button class="btn ghost" (click)="leaveRoom()">Sair da sala</button>
         </main>
       </section>
     }

@@ -47,6 +47,7 @@ export class AppComponent implements OnInit, OnDestroy {
   protected readonly errorMessage = signal('');
   protected readonly isLoading = signal(false);
   protected readonly copied = signal(false);
+  protected readonly roomMenuOpen = signal(false);
   protected readonly selectedVote = signal<string | null>(null);
   protected readonly activePreviewUrl = signal<SafeResourceUrl | null>(null);
   protected readonly previewPlaying = signal(false);
@@ -68,6 +69,8 @@ export class AppComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void { this.stopPolling(); this.stopRoundClock(); }
   protected setScreen(screen: Screen): void { this.currentScreen.set(screen); }
   protected async leaveRoom(): Promise<void> {
+    if (!window.confirm('Sair desta sala?')) return;
+    this.roomMenuOpen.set(false);
     const room = this.room();
     const playerId = this.playerId();
     if (room && playerId) {
@@ -101,6 +104,7 @@ export class AppComponent implements OnInit, OnDestroy {
     this.playerId.set('');
     this.roomCode.set('');
     this.lastRoundKey = '';
+    this.roomMenuOpen.set(false);
     this.currentScreen.set('home');
     window.history.replaceState({}, document.title, window.location.pathname);
   }
@@ -391,15 +395,26 @@ export class AppComponent implements OnInit, OnDestroy {
 
   private async restoreSession(session: SavedSession): Promise<void> {
     this.isLoading.set(true);
-    try {
-      const room = await firstValueFrom(this.http.get<Room>(`${this.apiBase}/rooms/${session.roomCode}`));
-      if (!room.players.some(player => player.id === session.playerId)) throw new Error('Jogador não encontrado');
-      this.enterRoom(room, session.playerId);
-    } catch {
-      localStorage.removeItem(this.sessionKey);
-      this.playerId.set('');
-    } finally {
-      this.isLoading.set(false);
+    this.roomCode.set(session.roomCode);
+    this.playerId.set(session.playerId);
+    this.playerName.set(session.playerName);
+    for (let attempt = 0; attempt < 4; attempt++) {
+      try {
+        const room = await firstValueFrom(this.http.get<Room>(`${this.apiBase}/rooms/${session.roomCode}`));
+        if (!room.players.some(player => player.id === session.playerId)) {
+          localStorage.removeItem(this.sessionKey);
+          this.playerId.set('');
+          this.roomCode.set('');
+          this.errorMessage.set('Sua participação nessa sala não está mais ativa.');
+          break;
+        }
+        this.enterRoom(room, session.playerId);
+        break;
+      } catch {
+        if (attempt < 3) await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
+        else this.errorMessage.set('Não foi possível reconectar agora. Atualize a página em alguns instantes.');
+      }
     }
+    this.isLoading.set(false);
   }
 }
